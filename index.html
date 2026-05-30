@@ -153,7 +153,8 @@ table tr:hover td.label-cell { background: #f0f4ff; }
 
 @media print {
   .app-header, .tabs-wrapper, .save-bar, .btn-add, .btn-del, .upload-card, .doc-tabs { display: none !important; }
-  .section { display: block !important; page-break-before: always; }
+  .section { display: none !important; }
+  .section.active { display: block !important; }
   .section:first-of-type { page-break-before: auto; }
   body { background: #fff; }
   .card { border: none; box-shadow: none; }
@@ -184,8 +185,8 @@ table tr:hover td.label-cell { background: #f0f4ff; }
   <button class="tab-btn" onclick="showTab('tab-debt',this)">7. 채무확정조서</button>
   <button class="tab-btn" onclick="showTab('tab-revenue',this)">8가. 세입현계표</button>
   <button class="tab-btn" onclick="showTab('tab-expense',this)">8가. 세출현계표</button>
-  <button class="tab-btn" onclick="showTab('tab-other',this)">8나다라</button>
-  <button class="tab-btn" onclick="showTab('tab-misc',this)">9~12</button>
+  <button class="tab-btn" onclick="showTab('tab-other',this)">8.세외/발전기금</button>
+  <button class="tab-btn" onclick="showTab('tab-misc',this)">9~12.기타</button>
   <button class="tab-btn" onclick="showTab('tab-facility',this)">13. 위험시설물</button>
   <button class="tab-btn" onclick="showTab('tab-docs',this)">기안문</button>
 </div>
