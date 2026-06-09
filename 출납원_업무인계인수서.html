@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>출납원 업무 인계·인수서</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--primary:#1a4f8a;--primary-light:#e8f0fb;--border:#c0c8d8;--text:#1a1a2e;--muted:#6b7280;--white:#fff;--bg:#f4f6fb;--accent:#2563eb;--green:#16a34a;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;background:var(--bg);color:var(--text);font-size:13px;}
+.app-header{background:var(--primary);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.app-header h1{font-size:16px;font-weight:700;}.app-header .meta{font-size:12px;opacity:.8;}
+.btn-print{background:#fff;color:var(--primary);border:none;padding:7px 16px;border-radius:6px;font-weight:700;cursor:pointer;font-size:13px;}
+.tabs-wrapper{background:var(--primary);padding:0 24px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;}
+.tabs-wrapper::-webkit-scrollbar{display:none;}
+.tab-btn{background:rgba(255,255,255,.12);color:rgba(255,255,255,.8);border:none;padding:9px 14px;cursor:pointer;white-space:nowrap;font-size:12px;border-radius:6px 6px 0 0;transition:all .15s;}
+.tab-btn:hover{background:rgba(255,255,255,.22);color:#fff;}
+.tab-btn.active{background:var(--bg);color:var(--primary);font-weight:700;}
+.content{max-width:1100px;margin:0 auto;padding:24px 16px;}
+.section{display:none;}.section.active{display:block;}
+.card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+.card-title{font-size:14px;font-weight:700;color:var(--primary);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--primary-light);}
+.form-grid{display:grid;gap:10px;}.form-grid-2{grid-template-columns:1fr 1fr;}.form-grid-3{grid-template-columns:1fr 1fr 1fr;}
+.form-row{display:flex;align-items:center;gap:8px;}
+.form-label{font-size:12px;font-weight:600;color:var(--muted);min-width:80px;white-space:nowrap;}
+.form-label.wide{min-width:130px;}
+input[type=text],input[type=date],input[type=number],textarea,select{flex:1;border:1px solid var(--border);border-radius:5px;padding:6px 10px;font-size:13px;font-family:inherit;background:#fafbfd;transition:border-color .15s;}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);background:#fff;}
+textarea{resize:vertical;min-height:60px;}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+table th,table td{border:1px solid var(--border);padding:6px 8px;text-align:center;vertical-align:middle;}
+table th{background:var(--primary-light);color:var(--primary);font-weight:700;white-space:normal;word-break:keep-all;}
+table td input{border:none;background:transparent;width:100%;padding:2px 4px;font-size:12px;text-align:right;}
+table td input[type=text]{text-align:left;}
+table td input:focus{background:#fffbe6;outline:none;border-bottom:1px solid var(--accent);}
+table td.label-cell{background:#f8faff;font-weight:600;text-align:left;white-space:normal;word-break:keep-all;}
+table td,table th{word-break:keep-all;}
+.sum-row td{background:var(--primary-light)!important;font-weight:700;}
+/* 그룹 헤더 행 */
+.group-header td{background:#dce8f8;font-weight:700;color:#1e3a5f;text-align:left;padding:5px 10px;}
+.group-subtotal td{background:#eef4fc;font-weight:700;color:#1e3a5f;}
+.notice{background:#fffbe6;border:1px solid #f0d060;border-radius:6px;padding:10px 14px;font-size:12px;color:#7a5a00;margin-bottom:12px;line-height:1.6;}
+.notice.err{background:#fff0f0;border-color:#f0a0a0;color:#900;}
+/* 표지 */
+.cover-box{text-align:center;width:210mm;min-height:297mm;margin:0 auto;border:2px solid var(--text);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 40px;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+.cover-date{font-size:15px;margin-bottom:50px;color:var(--muted);}
+.cover-title{font-size:32px;font-weight:900;letter-spacing:4px;margin-bottom:60px;color:var(--primary);}
+.cover-school{font-size:20px;font-weight:700;}
+/* 인계목록 */
+.handover-box{border:2px solid var(--text);margin-bottom:24px;}
+.handover-list{list-style:none;padding:0;}
+.handover-list li{display:flex;align-items:flex-start;padding:7px 16px;border-bottom:1px solid #dde3ef;font-size:13px;line-height:1.6;cursor:text;}
+.handover-list li:last-child{border-bottom:none;}
+.handover-num{min-width:28px;font-weight:700;color:var(--primary);}
+.handover-text{flex:1;outline:none;}.handover-text:focus{background:#fffbe6;border-radius:3px;}
+.handover-sub{margin-left:24px;font-size:12px;color:#555;line-height:2;}
+.handover-sub span{outline:none;}
+.handover-sig{border-top:2px solid var(--text);padding:20px 24px;}
+.handover-confirm{text-align:center;font-size:14px;font-weight:700;margin-bottom:20px;}
+.handover-date{text-align:center;margin-bottom:24px;font-size:14px;}
+.handover-date input{border:none;border-bottom:1px solid #999;width:140px;text-align:center;font-size:14px;background:transparent;}
+.sig-table{width:100%;border-collapse:collapse;font-size:13px;}
+.sig-table td{padding:8px 12px;vertical-align:middle;}
+.sig-table .sig-role{font-weight:700;width:60px;}
+.sig-table .sig-field{border-bottom:1px solid #999;min-width:90px;}
+.sig-table input.sig-in{border:none;background:transparent;width:100%;font-size:13px;}
+/* 공인목록 */
+.stamp-table th.stamp-col{min-width:120px;}
+/* contenteditable 테이블 */
+.editable-tbl td[contenteditable]{cursor:text;}
+.editable-tbl td[contenteditable]:focus{background:#fffbe6;outline:1px solid var(--accent);}
+.editable-tbl td[contenteditable]:empty::before{content:'클릭하여 입력';color:#ccc;font-size:11px;}
+.tbl-ctrl{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.btn-tbl{background:var(--primary-light);color:var(--primary);border:1px dashed var(--primary);border-radius:5px;padding:4px 12px;cursor:pointer;font-size:12px;}
+.btn-tbl:hover{background:var(--primary);color:#fff;}
+.btn-tbl.del{background:#fff0f0;color:#c00;border-color:#f0a0a0;}
+.btn-tbl.del:hover{background:#f0a0a0;color:#fff;}
+/* 업로드 */
+.upload-card{border:2px dashed var(--border);border-radius:10px;padding:16px 20px;background:#fafbff;margin-bottom:14px;transition:border-color .2s;}
+.upload-card.done{border-color:var(--green);background:#f0fdf4;}
+.upload-card.fail{border-color:#dc2626;background:#fff5f5;}
+.upload-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.upload-badge{background:var(--primary);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+.upload-badge.done{background:var(--green);}.upload-badge.fail{background:#dc2626;}
+.upload-title{font-weight:700;font-size:13px;}
+.upload-desc{font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;}
+.upload-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.file-input-label{display:inline-flex;align-items:center;gap:6px;background:var(--primary);color:#fff;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;}
+.file-input-label:hover{background:#143d6e;}
+.file-input-label input[type=file]{display:none;}
+.file-name{font-size:12px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.btn-reset-file{background:#fee2e2;color:#b91c1c;border:none;border-radius:5px;padding:6px 12px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;}
+.upload-status{font-size:11px;margin-top:6px;line-height:1.5;}
+.upload-status.ok{color:var(--green);font-weight:600;}
+.upload-status.err{color:#dc2626;}
+/* 모달 */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:#fff;border-radius:12px;padding:24px;max-width:800px;width:95%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+.modal-title{font-size:15px;font-weight:700;color:var(--primary);margin-bottom:6px;}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+.preview-table-wrap{overflow-x:auto;margin-bottom:14px;}
+.preview-table{border-collapse:collapse;font-size:11px;white-space:nowrap;}
+.preview-table th{background:#e8f0fb;border:1px solid #c0c8d8;padding:4px 8px;}
+.preview-table td{border:1px solid #e0e4ec;padding:3px 8px;}
+.map-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.map-row{display:flex;align-items:center;gap:8px;font-size:12px;}
+.map-label{min-width:110px;font-weight:600;color:var(--text);}
+.map-select{flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:12px;}
+.modal-btns{display:flex;gap:10px;justify-content:flex-end;}
+.btn-modal-ok{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:8px 20px;font-weight:700;cursor:pointer;}
+.btn-modal-cancel{background:#f0f4ff;color:var(--primary);border:1px solid var(--border);border-radius:6px;padding:8px 16px;cursor:pointer;}
+/* 기타 */
+.btn-add{background:var(--primary-light);color:var(--primary);border:1px dashed var(--primary);border-radius:5px;padding:5px 14px;cursor:pointer;font-size:12px;margin-top:8px;}
+.btn-add:hover{background:var(--primary);color:#fff;}
+.btn-del{background:none;border:none;color:#e55;cursor:pointer;font-size:16px;line-height:1;padding:0 4px;}
+.save-bar{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;gap:10px;align-items:center;}
+.btn-save{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 12px rgba(37,99,235,.4);}
+.saved-msg{background:#22c55e;color:#fff;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:700;opacity:0;transition:opacity .3s;}
+.saved-msg.show{opacity:1;}
+.doc-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.doc-tab-btn{background:#f0f4ff;color:var(--primary);border:1px solid var(--border);padding:7px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;}
+.doc-tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+/* 학생현황 */
+.rich-cell{width:100%;min-height:60px;padding:6px 8px;font-size:0.86rem;font-family:'Malgun Gothic','맑은 고딕',sans-serif;line-height:1.6;border:1px dashed #c8b8e0;border-radius:4px;background:#fdfbff;outline:none;box-sizing:border-box;overflow:auto;}
+.rich-cell:focus{border-color:#b07ae0;background:#fff;}
+.rich-cell:empty::before{content:attr(data-placeholder);color:#bbb;font-size:0.83rem;}
+.rich-cell table{border-collapse:collapse;width:100%;font-size:.84rem;}
+.rich-cell table td,.rich-cell table th{border:1px solid #bbb;padding:4px 6px;}
+.rich-cell img{max-width:100%;height:auto;display:block;margin:4px 0;}
+.rich-toolbar{display:none;gap:4px;flex-wrap:wrap;padding:4px 6px;background:#f0e8ff;border:1px solid #c8b8e0;border-bottom:none;border-radius:6px 6px 0 0;font-size:.75rem;}
+.rich-toolbar.visible{display:flex;}
+.rich-toolbar button{padding:3px 9px;border:1px solid #c0a8e0;border-radius:5px;background:#fff;color:#5a2080;font-size:.75rem;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;}
+.rich-toolbar button:hover{background:#e8d8f8;}
+.rich-cell-wrap{position:relative;}
+.rich-cell-wrap .rich-toolbar+.rich-cell{border-radius:0 0 4px 4px;}
+/* 인수인계 목록 */
+.handover-list li.checked{color:#dc2626;font-weight:700;}
+/* 열 너비 조정 핸들 */
+.col-resizer{position:absolute;right:0;top:0;width:5px;height:100%;cursor:col-resize;user-select:none;z-index:10;}
+.col-resizer:hover,.col-resizer.dragging{background:rgba(37,99,235,.35);}
+.row-resizer{position:absolute;left:0;bottom:0;width:100%;height:5px;cursor:row-resize;user-select:none;z-index:10;}
+.row-resizer:hover,.row-resizer.dragging{background:rgba(37,99,235,.35);}
+/* 세부사업 선택 */
+.debt-sel{width:100%;border:none;background:transparent;font-size:12px;font-family:inherit;cursor:pointer;padding:0;}
+@media print{
+  .app-header,.tabs-wrapper,.save-bar,.btn-add,.btn-del,.upload-card,.doc-tabs,.modal-overlay,.tbl-ctrl,.btn-tbl,.no-print{display:none!important;}
+  .section{display:none!important;}.section.active{display:block!important;}
+  body{background:#fff;}.card{border:none;box-shadow:none;}
+  .cover-box{box-shadow:none;}
+  input{border:none!important;background:transparent!important;}
+}
+@media(max-width:600px){.form-grid-2,.form-grid-3{grid-template-columns:1fr;}.map-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="app-header">
+  <div><h1>📋 출납원 업무 인계·인수서</h1><div class="meta" id="headerMeta">경기중학교 · 2025. 7. 1. 현재</div></div>
+  <button class="btn-print" onclick="window.print()">🖨️ 인쇄</button>
+</div>
+<div class="tabs-wrapper">
+  <button class="tab-btn active" onclick="showTab('tab-basic',this)">기본정보</button>
+  <button class="tab-btn" onclick="showTab('tab-cover',this)">표지</button>
+  <button class="tab-btn" onclick="showTab('tab-list',this)">인계인수 목록</button>
+  <button class="tab-btn" onclick="showTab('tab-school',this)">1~4. 학교현황</button>
+  <button class="tab-btn" onclick="showTab('tab-stamps',this)">5. 공인목록</button>
+  <button class="tab-btn" onclick="showTab('tab-cash',this)">6. 회계별 현금</button>
+  <button class="tab-btn" onclick="showTab('tab-debt',this)">7. 채무확정조서</button>
+  <button class="tab-btn" onclick="showTab('tab-revenue',this)">8가. 세입현계표</button>
+  <button class="tab-btn" onclick="showTab('tab-expense',this)">8가. 세출현계표</button>
+  <button class="tab-btn" onclick="showTab('tab-other',this)">8.세외/발전기금</button>
+  <button class="tab-btn" onclick="showTab('tab-misc',this)">9~12.기타</button>
+  <button class="tab-btn" onclick="showTab('tab-facility',this)">13. 위험시설물</button>
+  <button class="tab-btn" onclick="showTab('tab-docs',this)">기안문</button>
+</div>
+<div class="modal-overlay" id="mapModal">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle">열 매핑 확인</div>
+    <div class="modal-sub" id="modalSub"></div>
+    <div class="preview-table-wrap"><table class="preview-table" id="previewTable"></table></div>
+    <div class="map-grid" id="mapGrid"></div>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" onclick="closeModal()">취소</button>
+      <button class="btn-modal-ok" onclick="applyMapping()">✓ 이 매핑으로 삽입</button>
+    </div>
+  </div>
+</div>
+<div class="content">
+<!-- 기본정보 -->
+<div class="section active" id="tab-basic">
+  <div class="card">
+    <div class="card-title">1. 기본정보</div>
+    <div class="form-grid form-grid-2">
+      <div class="form-row"><span class="form-label">학교명</span><input type="text" id="schoolName" value="경기중학교" oninput="syncAll()"></div>
+      <div class="form-row"><span class="form-label">발령일자</span><input type="text" id="issueDate" value="2025. 7. 1." oninput="syncAll()"></div>
+    </div>
+    <div style="height:14px"></div>
+    <div class="form-grid form-grid-3">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:6px;">인계자</div>
+        <div class="form-row" style="margin-bottom:6px"><span class="form-label">직위</span><input type="text" id="giverPos" value="교육행정실장" oninput="syncAll()"></div>
+        <div class="form-row"><span class="form-label">성명</span><input type="text" id="giverName" value="김선임" oninput="syncAll()"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:6px;">인수자</div>
+        <div class="form-row" style="margin-bottom:6px"><span class="form-label">직위</span><input type="text" id="takerPos" value="교육행정실장" oninput="syncAll()"></div>
+        <div class="form-row"><span class="form-label">성명</span><input type="text" id="takerName" value="이후임" oninput="syncAll()"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:6px;">입회자</div>
+        <div class="form-row" style="margin-bottom:6px"><span class="form-label">직위</span><input type="text" id="witnessPos" value="학교장" oninput="syncAll()"></div>
+        <div class="form-row"><span class="form-label">성명</span><input type="text" id="witnessName" value="박교장" oninput="syncAll()"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">데이터 파일 업로드 (K-에듀파인에서 다운로드)</div>
+    <div id="xlsxWarning" style="display:none" class="notice err">⚠️ XLSX 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하거나 새로고침 해주세요.</div>
+    <div class="upload-card" id="uc-1">
+      <div class="upload-header"><span class="upload-badge" id="badge-1">파일 1</span><span class="upload-title">지출결의대상목록 → 7. 채무확정액 조서</span></div>
+      <div class="upload-desc">📥 K-에듀파인 → 학교회계 → 지출관리 → 지출처리 → 원인행위목록 → 결의대상(전체) 조회 후 Excel/CSV 다운로드</div>
+      <div class="notice" style="margin:6px 0;font-size:11px;line-height:1.7;">
+        ⚠️ <b>채무확정조서의 세부사업·채주는 자동화 서식이 지원되지 않으므로 아래 방법으로 확인 후 작성하세요.</b><br>
+        1. K-에듀파인 → 학교회계 → 지출관리 → 지출처리 → 원인행위목록에서 결의대상(전체) 원인행위 1건 클릭 후 세부사업·수령인정보 확인 작성<br>
+        2. K-에듀파인 → 학교회계 → 지출관리 → 지출현황 → 지출실적조회에서 원인행위 제목 입력 후 조회하여 세부사업 확인, 거래처별 실적조회에서 채주 확인<br>
+        📌 정책·단위사업은 세부사업을 선택하면 자동 입력됩니다.
+      </div>
+      <div class="upload-row">
+        <label class="file-input-label">📂 파일 선택<input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(event,1)"></label>
+        <span class="file-name" id="fn-1">선택된 파일 없음</span>
+        <button class="btn-reset-file" onclick="resetFile(1)">초기화</button>
+      </div>
+      <div class="upload-status" id="us-1"></div>
+    </div>
+    <div class="upload-card" id="uc-2">
+      <div class="upload-header"><span class="upload-badge" id="badge-2">파일 2</span><span class="upload-title">징수반환현황 → 8가. 세입 현계표</span></div>
+      <div class="upload-desc">📥 K-에듀파인 → 학교회계 → 사업관리 → 사업관리카드 → 집행실적엑셀저장(실시간) → <b>201 목/원가목별 세입실적</b></div>
+      <div class="upload-row">
+        <label class="file-input-label">📂 파일 선택<input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(event,2)"></label>
+        <span class="file-name" id="fn-2">선택된 파일 없음</span>
+        <button class="btn-reset-file" onclick="resetFile(2)">초기화</button>
+      </div>
+      <div class="upload-status" id="us-2"></div>
+    </div>
+    <div class="upload-card" id="uc-3">
+      <div class="upload-header"><span class="upload-badge" id="badge-3">파일 3</span><span class="upload-title">지출현황 → 8가. 세출 현계표</span></div>
+      <div class="upload-desc">📥 K-에듀파인 → 학교회계 → 사업관리 → 사업관리카드 → 집행실적엑셀저장(실시간) → <b>101 사업별/성질별 세출실적</b></div>
+      <div class="upload-row">
+        <label class="file-input-label">📂 파일 선택<input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(event,3)"></label>
+        <span class="file-name" id="fn-3">선택된 파일 없음</span>
+        <button class="btn-reset-file" onclick="resetFile(3)">초기화</button>
+      </div>
+      <div class="upload-status" id="us-3"></div>
+    </div>
+    <div class="upload-card" id="uc-4">
+      <div class="upload-header"><span class="upload-badge" id="badge-4">파일 4</span><span class="upload-title">세입세출외현금 → 8나. 세입세출외현금 수지현계표</span></div>
+      <div class="upload-desc">📥 K-에듀파인 → 학교회계 → 사업관리 → 사업관리카드 → 집행실적엑셀저장(실시간) → <b>301 세입세출외현금 실적</b></div>
+      <div class="upload-row">
+        <label class="file-input-label">📂 파일 선택<input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(event,4)"></label>
+        <span class="file-name" id="fn-4">선택된 파일 없음</span>
+        <button class="btn-reset-file" onclick="resetFile(4)">초기화</button>
+      </div>
+      <div class="upload-status" id="us-4"></div>
+    </div>
+  </div>
+</div>
+<!-- 표지 -->
+<div class="section" id="tab-cover">
+  <div class="cover-box">
+    <div class="cover-date" id="disp-coverDate">2025. 7. 1.  현재</div>
+    <div class="cover-title">출납원 업무 인계·인수서</div>
+    <div class="cover-school" id="disp-coverSchool">경기중학교</div>
+  </div>
+</div>
+<!-- 인계인수 목록 -->
+<div class="section" id="tab-list">
+  <div class="card">
+    <div class="card-title" style="text-align:center;font-size:16px;letter-spacing:2px;">업 무 인 계 · 인 수 목 록</div>
+    <div class="handover-box">
+      <ul class="handover-list">
+        <li><span class="handover-num">1</span><span class="handover-text" contenteditable="true">학교연혁</span></li>
+        <li><span class="handover-num">2</span><span class="handover-text" contenteditable="true">학생현황</span></li>
+        <li><span class="handover-num">3</span><span class="handover-text" contenteditable="true">교직원현황</span></li>
+        <li><span class="handover-num">4</span><span class="handover-text" contenteditable="true">시설현황</span></li>
+        <li><span class="handover-num">5</span><span class="handover-text" contenteditable="true">공인목록</span></li>
+        <li><span class="handover-num">6</span><span class="handover-text" contenteditable="true">회계별 현금 및 예금 현재고조서</span></li>
+        <li><span class="handover-num">7</span><span class="handover-text" contenteditable="true">채무확정액조서</span></li>
+        <li><span class="handover-num">8</span><span><span class="handover-text" contenteditable="true">회계별 수지현계표</span>
+          <div class="handover-sub">
+            <span contenteditable="true">가. 학교회계 세입, 세출 수지현계표</span><br>
+            <span contenteditable="true">나. 세입세출외현금 수지현계표</span><br>
+            <span contenteditable="true">다. 발전기금 수지현계표</span><br>
+            <span contenteditable="true">라. 세입금 수지현계표</span>
+          </div></span></li>
+        <li><span class="handover-num">9</span><span class="handover-text" contenteditable="true">기록물철등록부(보존문서 목록) 및 도서대장</span></li>
+        <li><span class="handover-num">10</span><span class="handover-text" contenteditable="true">공유재산 목록</span></li>
+        <li><span class="handover-num">11</span><span class="handover-text" contenteditable="true">미결 사항 및 현안사항</span></li>
+        <li><span class="handover-num">12</span><span class="handover-text" contenteditable="true">위험시설물 관리대장</span></li>
+      </ul>
+      <div class="handover-sig">
+        <div class="handover-confirm">위와 같이 인계·인수합니다.</div>
+        <div class="handover-date"><input type="text" id="list-date" value="" placeholder="2025. 8. 31."></div>
+        <table class="sig-table">
+          <tr>
+            <td class="sig-role">인계자</td>
+            <td>직:&nbsp;<input class="sig-in sig-field" id="list-giverPos" type="text" style="width:110px" value="교육행정실장"></td>
+            <td>성명:&nbsp;<input class="sig-in sig-field" id="list-giverName" type="text" style="width:80px" value=""></td>
+            <td style="font-size:12px;color:var(--muted);">&nbsp;(서명 또는 인)</td>
+          </tr>
+          <tr><td colspan="4" style="height:8px"></td></tr>
+          <tr>
+            <td class="sig-role">인수자</td>
+            <td>직:&nbsp;<input class="sig-in sig-field" id="list-takerPos" type="text" style="width:110px" value="교육행정실장"></td>
+            <td>성명:&nbsp;<input class="sig-in sig-field" id="list-takerName" type="text" style="width:80px" value=""></td>
+            <td style="font-size:12px;color:var(--muted);">&nbsp;(서명 또는 인)</td>
+          </tr>
+          <tr><td colspan="4" style="height:8px"></td></tr>
+          <tr>
+            <td class="sig-role">입회자</td>
+            <td>직:&nbsp;<input class="sig-in sig-field" id="list-witnessPos" type="text" style="width:110px" value="학교장"></td>
+            <td>성명:&nbsp;<input class="sig-in sig-field" id="list-witnessName" type="text" style="width:80px" value=""></td>
+            <td style="font-size:12px;color:var(--muted);">&nbsp;(서명 또는 인)</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 학교현황 -->
+<div class="section" id="tab-school">
+  <div class="card">
+    <div class="card-title">1. 학교연혁</div>
+    <div class="tbl-wrap"><table id="tbl-history">
+      <thead><tr><th style="width:130px">일자</th><th>연혁 내용</th><th style="width:40px"></th></tr></thead>
+      <tbody><tr><td><input type="text" value=""></td><td><input type="text" value=""></td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr></tbody>
+    </table></div>
+    <button class="btn-add" onclick="addRow('tbl-history',['',''])">+ 행 추가</button>
+  </div>
+  <div class="card">
+    <div class="card-title" style="display:flex;align-items:center;gap:16px;">2. 학생현황
+      <select id="school-type-sel" onchange="rebuildStudentTable()" style="font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:5px;background:#fff;">
+        <option value="elementary">초등학교 (1~6학년)</option>
+        <option value="middle">중학교 (1~3학년)</option>
+        <option value="high">고등학교 (1~3학년)</option>
+      </select>
+    </div>
+    <div class="tbl-wrap"><table class="editable-tbl" id="tbl-student"><thead id="tbl-student-head"></thead><tbody id="tbl-student-body"></tbody></table></div>
+    <div class="tbl-ctrl"><button class="btn-tbl" onclick="addStudentRow()">+ 행 추가</button></div>
+  </div>
+  <div class="card">
+    <div class="card-title">3. 교직원현황</div>
+    <div class="tbl-wrap"><table class="editable-tbl" id="tbl-staff">
+      <thead id="tbl-staff-head">
+        <tr>
+          <th contenteditable="true" style="min-width:50px">구분</th>
+          <th contenteditable="true">교장</th><th contenteditable="true">교감</th>
+          <th contenteditable="true">부장교사</th><th contenteditable="true">교사</th>
+          <th contenteditable="true">보건교사</th><th contenteditable="true">급식교사</th>
+          <th contenteditable="true" style="background:#dce8f8">소계</th>
+          <th contenteditable="true">행정직</th><th contenteditable="true">행정실무사</th>
+          <th contenteditable="true">조리실무사</th><th contenteditable="true">기타</th>
+          <th contenteditable="true" style="background:#dce8f8">소계</th>
+          <th contenteditable="true" style="background:#d0e4f0">합계</th>
+          <th style="width:30px"></th>
+        </tr>
+      </thead>
+      <tbody id="tbl-staff-body">
+        <tr><td contenteditable="true" style="background:#f8faff;font-weight:600">남</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true" style="background:#eef4fc">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true" style="background:#eef4fc">0</td><td contenteditable="true" style="background:#e4eef8;font-weight:700">0</td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+        <tr><td contenteditable="true" style="background:#f8faff;font-weight:600">여</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true" style="background:#eef4fc">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true" style="background:#eef4fc">0</td><td contenteditable="true" style="background:#e4eef8;font-weight:700">0</td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+        <tr style="background:var(--primary-light)"><td contenteditable="true" style="font-weight:700">계</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true" style="font-weight:700">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true" style="font-weight:700">0</td><td contenteditable="true" style="font-weight:700">0</td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+      </tbody>
+    </table></div>
+    <div class="tbl-ctrl">
+      <button class="btn-tbl" onclick="addEditableRow('tbl-staff-body',14)">+ 행 추가</button>
+      <button class="btn-tbl" onclick="addEditableCol('tbl-staff','tbl-staff-head','새항목',1)">+ 열 추가</button>
+      <button class="btn-tbl del" onclick="delLastCol('tbl-staff')">열 삭제</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">4. 시설현황</div>
+    <div class="tbl-wrap"><table class="editable-tbl" id="tbl-facility-school">
+      <thead id="tbl-facility-school-head">
+        <tr>
+          <th contenteditable="true" style="min-width:60px">구분</th>
+          <th contenteditable="true">교실</th><th contenteditable="true">교장실</th><th contenteditable="true">교무실</th><th contenteditable="true">행정실</th><th contenteditable="true">보건실</th><th contenteditable="true">과학실</th><th contenteditable="true">컴퓨터실</th><th contenteditable="true">도서실</th><th contenteditable="true">방송실</th><th contenteditable="true">급식실</th><th contenteditable="true">화장실</th><th contenteditable="true">기타</th>
+          <th style="width:30px"></th>
+        </tr>
+      </thead>
+      <tbody id="tbl-facility-school-body">
+        <tr><td contenteditable="true" style="background:#f8faff;font-weight:600">보유수</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td contenteditable="true">0</td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+      </tbody>
+    </table></div>
+    <div class="tbl-ctrl">
+      <button class="btn-tbl" onclick="addEditableRow('tbl-facility-school-body',13)">+ 행 추가</button>
+      <button class="btn-tbl" onclick="addEditableCol('tbl-facility-school','tbl-facility-school-head','새시설',1)">+ 열 추가</button>
+      <button class="btn-tbl del" onclick="delLastCol('tbl-facility-school')">열 삭제</button>
+    </div>
+  </div>
+</div>
+<!-- 공인목록 -->
+<div class="section" id="tab-stamps">
+  <div class="card">
+    <div class="card-title">5. 공인 목록</div>
+    <div class="notice">학교명을 변경하면 공인 명칭이 자동으로 업데이트됩니다. 날인란은 인쇄 후 실제 직인을 날인하세요.</div>
+    <div class="tbl-wrap"><table id="tbl-stamps">
+      <thead><tr><th style="min-width:200px">구 분</th><th style="width:50px">수량</th><th>비고 (인영)</th><th style="width:36px"></th></tr></thead>
+      <tbody id="stamps-body"></tbody>
+    </table></div>
+    <button class="btn-add" onclick="addStampRow('','1','','')">+ 행 추가</button>
+
+  </div>
+</div>
+<!-- 회계별 현금 -->
+<div class="section" id="tab-cash">
+  <div class="card">
+    <div class="card-title">6. 회계별 현금 및 예금 현재고조서 [단위: 원]</div>
+    <div class="tbl-wrap"><table id="tbl-cash">
+      <thead><tr><th>회계별</th><th>종별</th><th>계좌번호</th><th>잔액(원)</th><th>비고</th><th style="width:40px"></th></tr></thead>
+      <tbody>
+        <tr><td class="label-cell">학교회계</td><td><input type="text" value="보통예금"></td><td><input type="text" value=""></td><td><input class="num-fmt" type="text" value="0"></td><td><input type="text" value=""></td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+        <tr><td class="label-cell">세입세출외현금</td><td><input type="text" value="보통예금"></td><td><input type="text" value=""></td><td><input class="num-fmt" type="text" value="0"></td><td><input type="text" value=""></td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+        <tr><td class="label-cell">학교발전기금</td><td><input type="text" value="보통예금"></td><td><input type="text" value=""></td><td><input class="num-fmt" type="text" value="0"></td><td><input type="text" value=""></td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+        <tr><td class="label-cell">세입금</td><td><input type="text" value="보통예금"></td><td><input type="text" value=""></td><td><input class="num-fmt" type="text" value="0"></td><td><input type="text" value=""></td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+      </tbody>
+    </table></div>
+    <button class="btn-add" onclick="addCashRow()">+ 행 추가</button>
+  </div>
+</div>
+<!-- 채무확정조서 -->
+<div class="section" id="tab-debt">
+  <div class="card">
+    <div class="card-title">7. 채무확정액 조서 [단위: 원]</div>
+    <div class="notice">파일 1(지출결의대상목록)을 업로드하면 자동으로 채워집니다.</div>
+    <div class="tbl-wrap"><table id="tbl-debt">
+      <thead>
+        <tr><th colspan="3">지출과목</th><th>지출내역</th><th>지출원인행위일</th><th>금액(원)</th><th colspan="2">채주</th><th>비고</th><th style="width:40px"></th></tr>
+        <tr><th>정책</th><th>단위</th><th>세부</th><th></th><th></th><th></th><th>상호</th><th>성명</th><th></th><th></th></tr>
+      </thead>
+      <tbody id="debt-body">
+      </tbody>
+    </table></div>
+    <button class="btn-add" onclick="addDebtRow()">+ 행 추가</button>
+  </div>
+</div>
+<!-- 세입현계표 -->
+<div class="section" id="tab-revenue">
+  <div class="card">
+    <div class="card-title">8가. 학교회계 1) 세입 현계표 [단위: 원]</div>
+    <div class="notice">파일 2(세입현황)를 업로드하면 장·관·항·목별로 자동 채워집니다.</div>
+    <div class="tbl-ctrl no-print" style="margin-bottom:8px;">
+      <button class="btn-tbl" onclick="addRevenueRow()">+ 행 추가</button>
+      <button class="btn-tbl" onclick="recalcRevenue()">∑ 합계 재계산</button>
+    </div>
+    <div class="tbl-wrap"><table id="tbl-revenue">
+      <thead>
+        <tr>
+          <th style="width:70px">장</th>
+          <th style="width:70px">관</th>
+          <th style="width:70px">항</th>
+          <th style="min-width:140px">목</th>
+          <th style="width:120px">예산액</th>
+          <th style="width:120px">징수액</th>
+          <th style="width:120px">수납액</th>
+          <th style="width:120px">미수납액</th>
+          <th style="width:40px" class="no-print"></th>
+        </tr>
+      </thead>
+      <tbody id="revenue-body"></tbody>
+      <tfoot>
+        <tr class="sum-row">
+          <td colspan="4" class="label-cell">합 계</td>
+          <td><input class="num-fmt" type="text" id="rev-sum-budget" value="0" readonly></td>
+          <td><input class="num-fmt" type="text" id="rev-sum-징수" value="0" readonly></td>
+          <td><input class="num-fmt" type="text" id="rev-sum-수납" value="0" readonly></td>
+          <td><input class="num-fmt" type="text" id="rev-sum-미수납" value="0" readonly></td>
+          <td class="no-print"></td>
+        </tr>
+      </tfoot>
+    </table></div>
+  </div>
+</div>
+<!-- 세출현계표 -->
+<div class="section" id="tab-expense">
+  <div class="card">
+    <div class="card-title">8가. 학교회계 2) 세출 현계표 [단위: 원]</div>
+    <div class="notice">파일 3(지출현황)을 업로드하면 자동으로 채워집니다. 같은 단위사업은 자동으로 묶어서 표시됩니다.</div>
+    <div class="tbl-ctrl no-print" style="margin-bottom:8px;">
+      <button class="btn-tbl" onclick="addExpenseRow()">+ 단위사업 행 추가</button>
+      <button class="btn-tbl" onclick="recalcExpense()">∑ 합계 재계산</button>
+    </div>
+    <div class="tbl-wrap"><table id="tbl-expense">
+      <thead>
+        <tr>
+          <th style="min-width:160px">정책사업명</th>
+          <th style="min-width:160px">단위사업명</th>
+          <th style="width:120px">예산현액</th>
+          <th style="width:120px">지출액</th>
+          <th style="width:120px">잔액</th>
+          <th>비고</th>
+          <th style="width:40px" class="no-print"></th>
+        </tr>
+      </thead>
+      <tbody id="expense-body"></tbody>
+      <tfoot>
+        <tr class="sum-row">
+          <td colspan="2" class="label-cell">합 계</td>
+          <td><input class="num-fmt" type="text" id="exp-sum-budget" value="0" readonly></td>
+          <td><input class="num-fmt" type="text" id="exp-sum-지출" value="0" readonly></td>
+          <td><input class="num-fmt" type="text" id="exp-sum-잔액" value="0" readonly></td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table></div>
+  </div>
+</div>
+<!-- 8나다라 -->
+<div class="section" id="tab-other">
+  <div class="card">
+    <div class="card-title">나. 세입세출외현금 수지현계표 [단위: 원]</div>
+    <div class="notice">파일 4(세입세출외)를 업로드하면 자동으로 채워집니다.</div>
+    <div class="tbl-wrap"><table id="tbl-other-na">
+      <thead><tr><th>전년도이월액(A)</th><th colspan="2">종 목</th><th>수입(B)</th><th>수입계(C=A+B)</th><th>지출액(D)</th><th>잔액(C-D)</th><th style="width:40px"></th></tr></thead>
+      <tbody id="other-na-body">
+        <tr><td><input class="num-fmt" type="text" value="0"></td><td class="label-cell">보증금</td><td><input type="text" value="입찰보증금"></td><td><input class="num-fmt" type="text" value="0"></td><td><input class="num-fmt" type="text" value="0"></td><td><input class="num-fmt" type="text" value="0"></td><td><input class="num-fmt" type="text" value="0"></td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+        <tr><td><input class="num-fmt" type="text" value="0"></td><td class="label-cell">보관금</td><td><input type="text" value=""></td><td><input class="num-fmt" type="text" value="0"></td><td><input class="num-fmt" type="text" value="0"></td><td><input class="num-fmt" type="text" value="0"></td><td><input class="num-fmt" type="text" value="0"></td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+      </tbody>
+    </table></div>
+    <button class="btn-add" onclick="addOtherRow()">+ 행 추가</button>
+  </div>
+  <div class="card">
+    <div class="card-title">다. 발전기금 수지현계표 [단위: 원]</div>
+    <div class="tbl-wrap"><table id="tbl-devfund">
+      <thead>
+        <tr>
+          <th style="min-width:180px">종 별</th>
+          <th style="width:130px">전년도이월(A)</th>
+          <th style="width:130px">수 입(B)</th>
+          <th style="width:130px">수입계(C=A+B)</th>
+          <th style="width:130px">지 출(D)</th>
+          <th style="width:130px">잔 액(C-D)</th>
+          <th style="width:40px" class="no-print"></th>
+        </tr>
+      </thead>
+      <tbody id="devfund-body">
+        <tr>
+          <td><input type="text" style="border:none;background:transparent;width:100%;font-size:12px" value="학교교육시설의 보수및확충"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" oninput="calcDevfundRow(this)"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" oninput="calcDevfundRow(this)"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" readonly></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" oninput="calcDevfundRow(this)"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" readonly></td>
+          <td class="no-print"><button class="btn-del" onclick="delRow(this)">×</button></td>
+        </tr>
+        <tr>
+          <td><input type="text" style="border:none;background:transparent;width:100%;font-size:12px" value="교육용 기자재 및 도서의 구입"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" oninput="calcDevfundRow(this)"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" oninput="calcDevfundRow(this)"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" readonly></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" oninput="calcDevfundRow(this)"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" readonly></td>
+          <td class="no-print"><button class="btn-del" onclick="delRow(this)">×</button></td>
+        </tr>
+        <tr>
+          <td><input type="text" style="border:none;background:transparent;width:100%;font-size:12px" value="학교체육활동 기타 학예활동의 지원"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" oninput="calcDevfundRow(this)"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" oninput="calcDevfundRow(this)"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" readonly></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" oninput="calcDevfundRow(this)"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" readonly></td>
+          <td class="no-print"><button class="btn-del" onclick="delRow(this)">×</button></td>
+        </tr>
+        <tr>
+          <td><input type="text" style="border:none;background:transparent;width:100%;font-size:12px" value="학생복지 및 학생자치활동의 지원"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" oninput="calcDevfundRow(this)"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" oninput="calcDevfundRow(this)"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" readonly></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" oninput="calcDevfundRow(this)"></td>
+          <td><input class="num-fmt" type="text" value="0" style="border:none;background:transparent;width:100%;text-align:right;font-size:12px" readonly></td>
+          <td class="no-print"><button class="btn-del" onclick="delRow(this)">×</button></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr class="sum-row">
+          <td class="label-cell">합 계</td>
+          <td><input class="num-fmt" type="text" id="df-sum-prev" value="0" readonly></td>
+          <td><input class="num-fmt" type="text" id="df-sum-in" value="0" readonly></td>
+          <td><input class="num-fmt" type="text" id="df-sum-계" value="0" readonly></td>
+          <td><input class="num-fmt" type="text" id="df-sum-out" value="0" readonly></td>
+          <td><input class="num-fmt" type="text" id="df-sum-잔" value="0" readonly></td>
+          <td class="no-print"></td>
+        </tr>
+      </tfoot>
+    </table></div>
+    <button class="btn-add no-print" onclick="addDevfundRow()">+ 행 추가</button>
+  </div>
+  <div class="card">
+    <div class="card-title">라. 세입금 수지현계표 [단위: 원]</div>
+    <div class="tbl-wrap"><table id="tbl-revfund" style="border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th colspan="3" style="text-align:center;border:1px solid #aaa;background:#e8eef6;">과 목</th>
+          <th rowspan="2" style="width:120px;border:1px solid #aaa;background:#e8eef6;">징수결정액</th>
+          <th rowspan="2" style="width:120px;border:1px solid #aaa;background:#e8eef6;">수납액</th>
+          <th rowspan="2" style="width:120px;border:1px solid #aaa;background:#e8eef6;">미수납액</th>
+          <th rowspan="2" style="width:120px;border:1px solid #aaa;background:#e8eef6;">전년도이월</th>
+          <th rowspan="2" style="width:40px;border:1px solid #aaa;" class="no-print"></th>
+        </tr>
+        <tr>
+          <th style="min-width:140px;border:1px solid #aaa;background:#e8eef6;">관</th>
+          <th style="min-width:120px;border:1px solid #aaa;background:#e8eef6;">항</th>
+          <th style="min-width:100px;border:1px solid #aaa;background:#e8eef6;">목</th>
+        </tr>
+      </thead>
+      <tbody id="revfund-body"></tbody>
+      <tfoot>
+        <tr class="sum-row">
+          <td colspan="3" class="label-cell" style="border:1px solid #aaa;">합 계</td>
+          <td style="border:1px solid #aaa;"><input class="num-fmt" type="text" id="rf-sum-징수" value="0" readonly></td>
+          <td style="border:1px solid #aaa;"><input class="num-fmt" type="text" id="rf-sum-수납" value="0" readonly></td>
+          <td style="border:1px solid #aaa;"><input class="num-fmt" type="text" id="rf-sum-미수납" value="0" readonly></td>
+          <td style="border:1px solid #aaa;"><input class="num-fmt" type="text" id="rf-sum-이월" value="0" readonly></td>
+          <td class="no-print"></td>
+        </tr>
+      </tfoot>
+    </table></div>
+    <div class="tbl-ctrl no-print" style="margin-top:6px;">
+      <button class="btn-tbl" onclick="addRevfundRow()">+ 행 추가</button>
+      <button class="btn-tbl" onclick="recalcRevfund()">∑ 합계 재계산</button>
+    </div>
+  </div>
+</div>
+<!-- 9~12 -->
+<div class="section" id="tab-misc">
+  <div class="card"><div class="card-title">9. 보안문서 목록</div><p style="color:var(--muted);margin-bottom:8px">"별첨 비밀관리기록부와 같음"</p><textarea id="sec9_note" style="width:100%;min-height:80px"></textarea></div>
+  <div class="card"><div class="card-title">10. 기록물철등록부 및 도서대장</div><p style="color:var(--muted);margin-bottom:8px">"업무 인계·인수일자 현재 업무관리시스템 기록물철등록부 및 도서관리시스템 도서대장 현황과 같음"</p><textarea id="sec10_note" style="width:100%;min-height:80px"></textarea></div>
+  <div class="card"><div class="card-title">11. 물품 목록</div><p style="color:var(--muted);margin-bottom:8px">"별첨 비소모품출납 및 운용카드부(물품보유목록 포함)와 같음"</p><textarea id="sec11_note" style="width:100%;min-height:80px"></textarea></div>
+  <div class="card">
+    <div class="card-title">12. 미결사항 및 현안사항</div>
+    <div class="tbl-wrap"><table id="tbl-pending">
+      <thead><tr><th style="width:100px">구 분</th><th>건 명</th><th>개 요</th><th>비고</th><th style="width:40px"></th></tr></thead>
+      <tbody>
+        <tr><td class="label-cell">미결사항</td><td><input type="text" value=""></td><td><input type="text" value=""></td><td><input type="text" value=""></td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+        <tr><td class="label-cell">현안사항</td><td><input type="text" value=""></td><td><input type="text" value=""></td><td><input type="text" value=""></td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+      </tbody>
+    </table></div>
+    <button class="btn-add" onclick="addRow('tbl-pending',['미결사항','','',''])">+ 행 추가</button>
+  </div>
+</div>
+<!-- 위험시설물 -->
+<div class="section" id="tab-facility">
+  <div class="card">
+    <div class="card-title">13. 위험시설물 관리대장</div>
+    <div class="tbl-wrap"><table id="tbl-facility">
+      <thead><tr><th>시설명</th><th>세부품명</th><th>규격</th><th>수량</th><th>설치연도</th><th>설치장소</th><th>안전관리자(유지관리업체)</th><th>비고</th><th style="width:40px"></th></tr></thead>
+      <tbody>
+        <tr><td><input type="text" value="자가용 전기설비"></td><td><input type="text" value="수배전반"></td><td><input type="text" value="22.9kv/750kw"></td><td><input type="text" value="1"></td><td><input type="text" value="2002"></td><td><input type="text" value="전기실"></td><td><input type="text" value="00전기안전공사"></td><td><input type="text" value=""></td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+        <tr><td><input type="text" value="승강기"></td><td><input type="text" value="승강로"></td><td><input type="text" value="15인승 750KG"></td><td><input type="text" value="1"></td><td><input type="text" value="2002"></td><td><input type="text" value="본관"></td><td><input type="text" value="00승강기"></td><td><input type="text" value=""></td><td><button class="btn-del" onclick="delRow(this)">×</button></td></tr>
+      </tbody>
+    </table></div>
+    <button class="btn-add" onclick="addRow('tbl-facility',['','','','1','','','',''])">+ 행 추가</button>
+  </div>
+</div>
+<!-- 기안문 -->
+<div class="section" id="tab-docs">
+  <div class="doc-tabs">
+    <button class="doc-tab-btn active" onclick="showDoc(1,this)">보안교육</button>
+    <button class="doc-tab-btn" onclick="showDoc(2,this)">비상연락</button>
+    <button class="doc-tab-btn" onclick="showDoc(3,this)">고유번호증</button>
+    <button class="doc-tab-btn" onclick="showDoc(4,this)">안전관리자</button>
+  </div>
+  <div id="doc-1" class="card">
+    <div class="card-title">(기안문) 전입 및 신규임용 교직원 보안교육</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px">
+      <tr><td style="padding:6px 10px;border:1px solid var(--border);width:80px;background:#f8faff;font-weight:600">발신</td><td style="padding:6px 10px;border:1px solid var(--border)"><span id="doc1-school">경기중학교</span></td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid var(--border);background:#f8faff;font-weight:600">수신</td><td style="padding:6px 10px;border:1px solid var(--border)">내부결재</td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid var(--border);background:#f8faff;font-weight:600">제목</td><td style="padding:6px 10px;border:1px solid var(--border)"><input type="text" style="width:100%;border:none;font-size:13px" value="0000. 00. 00.자 전입 및 신규임용 교직원 보안교육 결과 보고"></td></tr>
+    </table>
+    <div style="font-size:13px;line-height:2.2">
+      <p>1. 관련: 경기도교육청 보안업무 시행요령 제74조</p>
+      <p>2. <input type="text" style="border:none;border-bottom:1px solid var(--border);width:110px" value="0000. 00. 00.">자 전입 및 신규임용 교직원 보안교육 실시 결과를 다음과 같이 보고합니다.</p>
+      <div style="margin-left:20px">
+        <p>가. 일시: <input type="text" style="border:none;border-bottom:1px solid var(--border);width:200px" value=""></p>
+        <p>나. 장소: 교육행정실</p>
+        <p>다. 대상: 전입 및 신규임용 교직원 <input type="text" style="border:none;border-bottom:1px solid var(--border);width:40px;text-align:center" value="0">명</p>
+        <p>라. 내용: 붙임 교육자료 참고</p>
+      </div>
+      <p style="margin-top:10px">붙임 &nbsp; 1. 교육자료 1부. &nbsp; 2. 등록부 1부. &nbsp; 끝.</p>
+    </div>
+    <div style="display:flex;gap:30px;margin-top:30px">
+      <div style="text-align:center"><div style="border:1px solid var(--border);padding:8px 24px;font-size:12px">기안</div><div style="margin-top:4px;font-size:12px;color:var(--muted)" id="doc1-giver">김선임</div></div>
+      <div style="text-align:center"><div style="border:1px solid var(--border);padding:8px 24px;font-size:12px">검토</div><div style="margin-top:4px"><input type="text" style="width:80px;text-align:center;border:none;border-bottom:1px solid var(--border);font-size:12px" value=""></div></div>
+      <div style="text-align:center"><div style="border:1px solid var(--border);padding:8px 24px;font-size:12px">결재</div><div style="margin-top:4px;font-size:12px;color:var(--muted)" id="doc1-taker">이후임</div></div>
+    </div>
+  </div>
+  <div id="doc-2" class="card" style="display:none">
+    <div class="card-title">(기안문) 비상연락망 정비</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px">
+      <tr><td style="padding:6px 10px;border:1px solid var(--border);width:80px;background:#f8faff;font-weight:600">발신</td><td style="padding:6px 10px;border:1px solid var(--border)"><span id="doc2-school">경기중학교</span></td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid var(--border);background:#f8faff;font-weight:600">수신</td><td style="padding:6px 10px;border:1px solid var(--border)">내부결재</td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid var(--border);background:#f8faff;font-weight:600">제목</td><td style="padding:6px 10px;border:1px solid var(--border)"><input type="text" style="width:100%;border:none;font-size:13px" value="0000. 00. 00.자 비상연락망 정비"></td></tr>
+    </table>
+    <div style="font-size:13px;line-height:2.2">
+      <p>1. 관련: 경기도교육청 보안업무 시행요령 제62조</p>
+      <p>2. <input type="text" style="border:none;border-bottom:1px solid var(--border);width:110px" value="0000. 00. 00.">자 인사발령에 따른 비상연락망 정비결과를 붙임과 같이 보고합니다.</p>
+      <p style="margin-top:10px">붙임 &nbsp; 비상연락망 1부. &nbsp; 끝.</p>
+    </div>
+    <div style="display:flex;gap:30px;margin-top:30px">
+      <div style="text-align:center"><div style="border:1px solid var(--border);padding:8px 24px;font-size:12px">기안</div><div style="margin-top:4px;font-size:12px;color:var(--muted)" id="doc2-giver">김선임</div></div>
+      <div style="text-align:center"><div style="border:1px solid var(--border);padding:8px 24px;font-size:12px">결재</div><div style="margin-top:4px;font-size:12px;color:var(--muted)" id="doc2-taker">이후임</div></div>
+    </div>
+  </div>
+  <div id="doc-3" class="card" style="display:none">
+    <div class="card-title">(기안문) 고유번호증 변경 신고</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px">
+      <tr><td style="padding:6px 10px;border:1px solid var(--border);width:80px;background:#f8faff;font-weight:600">발신</td><td style="padding:6px 10px;border:1px solid var(--border)"><span id="doc3-school">경기중학교</span></td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid var(--border);background:#f8faff;font-weight:600">수신</td><td style="padding:6px 10px;border:1px solid var(--border)"><input type="text" style="border:none;width:100%" value="OO세무서"></td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid var(--border);background:#f8faff;font-weight:600">제목</td><td style="padding:6px 10px;border:1px solid var(--border)"><input type="text" style="width:100%;border:none;font-size:13px" value="인사발령에 따른 고유번호증 변경 신고"></td></tr>
+    </table>
+    <div style="font-size:13px;line-height:2.2">
+      <p>1. 관련: 부가가치세법 시행령 제14조</p>
+      <p>2. 대표자 변경으로 고유번호등록 사항의 변경을 신고합니다.</p>
+      <table style="width:96%;margin-left:20px;border-collapse:collapse;font-size:12px;margin-top:8px">
+        <thead><tr><th colspan="2" style="border:1px solid var(--border);padding:5px;background:var(--primary-light)">구분</th><th style="border:1px solid var(--border);padding:5px;background:var(--primary-light)">변경 전</th><th style="border:1px solid var(--border);padding:5px;background:var(--primary-light)">변경 후</th><th style="border:1px solid var(--border);padding:5px;background:var(--primary-light)">변경일</th></tr></thead>
+        <tbody><tr><td style="border:1px solid var(--border);padding:5px;background:#f8faff" colspan="2">대표자명</td>
+          <td style="border:1px solid var(--border);padding:5px"><input type="text" style="border:none;width:100%" id="doc3-giver" value="김선임"></td>
+          <td style="border:1px solid var(--border);padding:5px"><input type="text" style="border:none;width:100%" id="doc3-taker" value="이후임"></td>
+          <td style="border:1px solid var(--border);padding:5px"><input type="text" style="border:none;width:100%" id="doc3-date" value=""></td>
+        </tr></tbody>
+      </table>
+      <p style="margin-top:10px">끝.</p>
+    </div>
+  </div>
+  <div id="doc-4" class="card" style="display:none">
+    <div class="card-title">(기안문) 기계설비 유지관리자 신고사항 변경 신고</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px">
+      <tr><td style="padding:6px 10px;border:1px solid var(--border);width:80px;background:#f8faff;font-weight:600">발신</td><td style="padding:6px 10px;border:1px solid var(--border)"><span id="doc4-school">경기중학교</span></td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid var(--border);background:#f8faff;font-weight:600">수신</td><td style="padding:6px 10px;border:1px solid var(--border)"><input type="text" style="border:none;width:100%" value="○○시장"></td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid var(--border);background:#f8faff;font-weight:600">제목</td><td style="padding:6px 10px;border:1px solid var(--border)"><input type="text" style="width:100%;border:none;font-size:13px" value="기계설비 유지관리자 신고사항 변경 신고"></td></tr>
+    </table>
+    <div style="font-size:13px;line-height:2.2">
+      <p>1. 관련: 기계설비법 제19조 및 같은 법 시행규칙 제8조의2</p>
+      <p>2. 인사발령에 따라 기계설비 유지관리자 신고사항을 변경신고합니다.</p>
+      <table style="width:96%;margin-left:20px;border-collapse:collapse;font-size:12px;margin-top:8px">
+        <thead><tr><th colspan="2" style="border:1px solid var(--border);padding:5px;background:var(--primary-light)">구분</th><th style="border:1px solid var(--border);padding:5px;background:var(--primary-light)">변경 전</th><th style="border:1px solid var(--border);padding:5px;background:var(--primary-light)">변경 후</th><th style="border:1px solid var(--border);padding:5px;background:var(--primary-light)">변경일</th></tr></thead>
+        <tbody>
+          <tr><td style="border:1px solid var(--border);padding:5px;background:#f8faff" rowspan="2">관리주체</td><td style="border:1px solid var(--border);padding:5px;background:#f8faff">상호(명칭)</td>
+            <td style="border:1px solid var(--border);padding:5px"><input type="text" style="border:none;width:100%" id="doc4-school-old" value=""></td>
+            <td style="border:1px solid var(--border);padding:5px">좌동</td><td style="border:1px solid var(--border);padding:5px">-</td></tr>
+          <tr><td style="border:1px solid var(--border);padding:5px;background:#f8faff">대표자 성명</td>
+            <td style="border:1px solid var(--border);padding:5px"><input type="text" style="border:none;width:100%" id="doc4-giver" value="김선임"></td>
+            <td style="border:1px solid var(--border);padding:5px"><input type="text" style="border:none;width:100%" id="doc4-taker" value="이후임"></td>
+            <td style="border:1px solid var(--border);padding:5px"><input type="text" style="border:none;width:100%" id="doc4-date" value=""></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:10px">끝.</p>
+    </div>
+  </div>
+</div>
+</div><!-- .content -->
+<div class="save-bar">
+  <span class="saved-msg" id="savedMsg">✓ 저장됨</span>
+  <button class="btn-save" onclick="saveData()">💾 저장</button>
+</div>
+<script>
+// ── 숫자 쉼표 포맷 ──
+function fmtNum(n) {
+  const s = String(n==null?'':n).replace(/,/g,'').trim();
+  const num = parseFloat(s);
+  if (isNaN(num)||s==='') return s;
+  return num.toLocaleString('ko-KR');
+}
+function rawNum(v) {
+  const n = parseFloat(String(v).replace(/,/g,''));
+  return isNaN(n) ? 0 : n;
+}
+// input.num-fmt : blur→쉼표, focus→숫자만
+function setupNumFmt(root) {
+  (root||document).querySelectorAll('input.num-fmt').forEach(inp => {
+    if (inp._numFmtDone) return;
+    inp._numFmtDone = true;
+    inp.addEventListener('focus', function(){ this.value = String(this.value).replace(/,/g,''); });
+    inp.addEventListener('blur',  function(){ this.value = fmtNum(this.value); });
+    // 초기 포맷
+    if (inp.value) inp.value = fmtNum(inp.value);
+  });
+}
+
+// ── 공인목록 ──
+const STAMP_DATA = [
+  {suf:'장인',size:'2.4cm'},{suf:'유치원장인',size:'2.4cm'},
+  {suf:'분임징수관인',size:'2.0cm'},{suf:'물품관리관인',size:'2.0cm'},
+  {suf:'발전기금회계운영위원장인',size:'2.0cm'},{suf:'회계출납원인',size:'1.8cm'},
+  {suf:'물품출납원인',size:'1.8cm'},{suf:'수입금출납원인',size:'1.8cm'},
+  {suf:'세입세출외현금출납원인',size:'1.8cm'},{suf:'발전기금회계출납원인',size:'1.8cm'},
+  {suf:'운영위원회인',size:'3.6cm'},
+];
+function buildStampsTable() {
+  const school=g('schoolName'), tbody=document.getElementById('stamps-body');
+  const existing={};
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const cells=tr.querySelectorAll('td');
+    if(cells.length>=2) existing[cells[0].textContent.trim()]={qty:cells[1].querySelector('input')?.value||'1',note:cells[2]?.querySelector('input')?.value||''};
+  });
+  tbody.innerHTML='';
+  STAMP_DATA.forEach(d=>{
+    const name=school+d.suf, s=existing[name]||{};
+    addStampRow(name,s.qty||'1',d.size,s.note||'');
+  });
+}
+function addStampRow(name,qty,size,note) {
+  const tbody=document.getElementById('stamps-body');
+  const tr=document.createElement('tr');
+  tr.style.position='relative';
+  tr.innerHTML=`<td class="label-cell" style="min-width:200px;position:relative;">${name}</td>
+    <td style="text-align:center"><input type="text" value="${qty}" style="width:40px;text-align:center;border:none;background:transparent"></td>
+    <td style="padding:8px;"><input type="text" value="${note||''}" style="border:none;background:transparent;width:100%;font-size:12px"></td>
+    <td><button class="btn-del" onclick="delRow(this)">×</button></td>`;
+  // 행 높이 드래그 핸들 — 첫 번째 셀 하단에 부착
+  const firstTd=tr.querySelector('td');
+  const rz=document.createElement('div');rz.className='row-resizer';
+  let startY,startH;
+  rz.addEventListener('mousedown',e=>{
+    startY=e.clientY;startH=tr.offsetHeight;rz.classList.add('dragging');
+    const move=ev=>{const h=Math.max(28,startH+ev.clientY-startY);tr.style.height=h+'px';};
+    const up=()=>{rz.classList.remove('dragging');document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);};
+    document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);
+    e.preventDefault();e.stopPropagation();
+  });
+  firstTd.appendChild(rz);
+  tbody.appendChild(tr);
+}
+
+// ── syncAll ──
+function g(id){return document.getElementById(id)?.value||'';}
+function setText(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+function setVal(id,v){const el=document.getElementById(id);if(el)el.value=v;}
+function syncAll(){
+  const school=g('schoolName'),date=g('issueDate');
+  const giverPos=g('giverPos'),giverName=g('giverName');
+  const takerPos=g('takerPos'),takerName=g('takerName');
+  const witnessPos=g('witnessPos'),witnessName=g('witnessName');
+  setText('headerMeta',school+' · '+date+' 현재');
+  setText('disp-coverDate',date+'  현재');
+  setText('disp-coverSchool',school);
+  buildStampsTable();
+  setVal('list-date',date);
+  setVal('list-giverPos',giverPos); setVal('list-giverName',giverName);
+  setVal('list-takerPos',takerPos); setVal('list-takerName',takerName);
+  setVal('list-witnessPos',witnessPos); setVal('list-witnessName',witnessName);
+  ['doc1','doc2','doc3','doc4'].forEach(p=>setText(p+'-school',school));
+  setText('doc1-giver',giverName); setText('doc1-taker',takerName);
+  setText('doc2-giver',giverName); setText('doc2-taker',takerName);
+  setVal('doc3-giver',giverName); setVal('doc3-taker',takerName); setVal('doc3-date',date);
+  setVal('doc4-school-old',school); setVal('doc4-giver',giverName);
+  setVal('doc4-taker',takerName); setVal('doc4-date',date);
+}
+
+// ── 탭 ──
+function showTab(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(()=>setupNumFmt(),50);
+}
+function showDoc(n,btn){
+  [1,2,3,4].forEach(i=>document.getElementById('doc-'+i).style.display=i===n?'block':'none');
+  document.querySelectorAll('.doc-tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── 행 추가/삭제 ──
+function delRow(btn){const row=btn.closest('tr');if(row.closest('tbody').rows.length>1)row.remove();}
+function addRow(tblId,defaults){
+  const tbody=document.querySelector('#'+tblId+' tbody');
+  if(!tbody)return;
+  const tr=document.createElement('tr');
+  defaults.forEach(val=>{
+    const td=document.createElement('td');
+    const inp=document.createElement('input');
+    inp.type='text'; inp.value=val;
+    td.appendChild(inp); tr.appendChild(td);
+  });
+  const tdDel=document.createElement('td');
+  const btn=document.createElement('button');
+  btn.className='btn-del'; btn.textContent='×'; btn.onclick=()=>delRow(btn);
+  tdDel.appendChild(btn); tr.appendChild(tdDel);
+  tbody.appendChild(tr);
+  setupNumFmt(tr);
+}
+function addCashRow(){
+  const tbody=document.querySelector('#tbl-cash tbody');
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td class="label-cell"><input type="text" value=""></td><td><input type="text" value="보통예금"></td><td><input type="text" value=""></td><td><input class="num-fmt" type="text" value="0"></td><td><input type="text" value=""></td><td><button class="btn-del" onclick="delRow(this)">×</button></td>`;
+  tbody.appendChild(tr); setupNumFmt(tr);
+}
+// ── 세출예산 사업 목록 (정책/단위/세부) ──
+const BUDGET_ITEMS=[
+  ['인적자원운용','기타교직원보수','교직원대체인건비'],
+  ['인적자원운용','기타교직원보수','기타수당'],
+  ['인적자원운용','교직원복지및역량강화','교직원역량강화'],
+  ['인적자원운용','교직원복지및역량강화','교직원복지'],
+  ['학생복지/교육격차해소','급식관리','학교급식운영'],
+  ['학생복지/교육격차해소','기숙사관리','기숙사운영'],
+  ['학생복지/교육격차해소','보건관리','학생및교직원보건안전관리'],
+  ['학생복지/교육격차해소','보건관리','학교환경위생관리'],
+  ['학생복지/교육격차해소','교육격차해소','학비지원'],
+  ['학생복지/교육격차해소','교육격차해소','정보화지원'],
+  ['학생복지/교육격차해소','교육격차해소','기타교육격차해소지원'],
+  ['학생복지/교육격차해소','학생복지','학생장학금운영'],
+  ['학생복지/교육격차해소','학생복지','교육복지우선'],
+  ['학생복지/교육격차해소','학생복지','학생복지운영'],
+  ['기본적교육활동','교과활동','교과활동지원'],
+  ['기본적교육활동','교과활동','국어교과활동'],
+  ['기본적교육활동','교과활동','사회교과활동'],
+  ['기본적교육활동','교과활동','수학교과활동'],
+  ['기본적교육활동','교과활동','과학교과활동'],
+  ['기본적교육활동','교과활동','체육교과활동'],
+  ['기본적교육활동','교과활동','예술교과활동'],
+  ['기본적교육활동','교과활동','외국어교과활동'],
+  ['기본적교육활동','교과활동','선택교과활동'],
+  ['기본적교육활동','교과활동','특수교육교과활동'],
+  ['기본적교육활동','교과활동','전문교과활동'],
+  ['기본적교육활동','교과활동','유치원교과활동'],
+  ['기본적교육활동','교과활동','부설기관교과활동'],
+  ['기본적교육활동','교과활동','정보교과활동'],
+  ['기본적교육활동','창의적체험활동','자율·자치활동'],
+  ['기본적교육활동','창의적체험활동','현장체험학습활동'],
+  ['기본적교육활동','창의적체험활동','동아리활동'],
+  ['기본적교육활동','창의적체험활동','봉사활동'],
+  ['기본적교육활동','창의적체험활동','진로활동'],
+  ['기본적교육활동','자유학기(년)활동','자유학기활동'],
+  ['선택적교육활동','방과후학교운영','방과후학교운영'],
+  ['선택적교육활동','방과후학교운영','늘봄학교운영'],
+  ['선택적교육활동','방과후학교운영','유치원방과후과정운영'],
+  ['선택적교육활동','직업교육','직업교육운영'],
+  ['선택적교육활동','국제교육','국제교육운영'],
+  ['선택적교육활동','독서활동','독서활동운영'],
+  ['선택적교육활동','교기육성','교기운영'],
+  ['선택적교육활동','기타선택적교육활동','창의교육운영'],
+  ['선택적교육활동','기타선택적교육활동','기타선택적교육운영'],
+  ['선택적교육활동','기타선택적교육활동','다문화교육운영'],
+  ['교육활동지원','교무업무운영','교무학사운영'],
+  ['교육활동지원','생활지도운영','학생생활상담지도'],
+  ['교육활동지원','생활지도운영','학교폭력예방'],
+  ['교육활동지원','생활지도운영','학생안전교육'],
+  ['교육활동지원','연구학교운영','연구학교운영'],
+  ['교육활동지원','학습지원실운영','방송실운영'],
+  ['교육활동지원','학습지원실운영','정보화실운영'],
+  ['교육활동지원','학습지원실운영','공동실습소운영'],
+  ['교육활동지원','학습지원실운영','기타학습지원실운영'],
+  ['교육활동지원','교육여건개선','교육환경개선'],
+  ['학교일반운영','학교기관운영','부서기본운영'],
+  ['학교일반운영','학교기관운영','부설기관운영'],
+  ['학교일반운영','학교기관운영','병설유치원기본운영'],
+  ['학교일반운영','학교기관운영','행정지원인력운용'],
+  ['학교일반운영','시설장비유지','학교시설장비유지'],
+  ['학교일반운영','학교운영협력','학교운영위원회운영'],
+  ['학교일반운영','학교운영협력','학부모협력'],
+  ['학교일반운영','학교운영협력','관계기관협력'],
+  ['학교시설확충','시설확충및개선','시설확충및개선'],
+  ['학교재무활동','반환금','반환금'],
+  ['학교재무활동','예비비','예비비'],
+];
+// 세부사업 → {정책,단위} 역방향 맵
+const BUDGET_MAP=new Map(BUDGET_ITEMS.map(([p,u,d])=>[d,{policy:p,unit:u}]));
+
+function makeBudgetSelect(defaultVal){
+  const sel=document.createElement('select');
+  sel.className='debt-sel';
+  const blank=document.createElement('option');blank.value='';blank.textContent='— 선택 —';sel.appendChild(blank);
+  BUDGET_ITEMS.forEach(([,, d])=>{
+    const o=document.createElement('option');o.value=d;o.textContent=d;
+    if(d===defaultVal)o.selected=true;
+    sel.appendChild(o);
+  });
+  sel.addEventListener('change',function(){
+    const tr=this.closest('tr');
+    const info=BUDGET_MAP.get(this.value)||{policy:'',unit:''};
+    tr.cells[0].querySelector('input').value=info.policy;
+    tr.cells[1].querySelector('input').value=info.unit;
+  });
+  return sel;
+}
+function addDebtRow(policy,unit,detail,title,date,amount,company,person,note){
+  const tbody=document.getElementById('debt-body');
+  const tr=document.createElement('tr');
+  const mkI=(val)=>{const i=document.createElement('input');i.type='text';i.value=val||'';i.style.cssText='border:none;background:transparent;width:100%;font-size:12px;';return i;};
+  // 정책사업 (읽기전용 표시 - 세부사업 선택시 자동)
+  const td0=document.createElement('td');td0.appendChild(mkI(policy||''));tr.appendChild(td0);
+  const td1=document.createElement('td');td1.appendChild(mkI(unit||''));tr.appendChild(td1);
+  // 세부사업 select
+  const td2=document.createElement('td');td2.appendChild(makeBudgetSelect(detail||''));tr.appendChild(td2);
+  // 지출내역(제목)
+  const td3=document.createElement('td');td3.appendChild(mkI(title||''));tr.appendChild(td3);
+  // 원인행위일
+  const td4=document.createElement('td');td4.appendChild(mkI(date||''));tr.appendChild(td4);
+  // 금액
+  const td5=document.createElement('td');td5.appendChild(makeNumInp(amount||0));tr.appendChild(td5);
+  // 채주 상호/성명
+  const td6=document.createElement('td');td6.appendChild(mkI(company||''));tr.appendChild(td6);
+  const td7=document.createElement('td');td7.appendChild(mkI(person||''));tr.appendChild(td7);
+  // 비고
+  const td8=document.createElement('td');td8.appendChild(mkI(note||''));tr.appendChild(td8);
+  // 삭제
+  const td9=document.createElement('td');td9.className='no-print';
+  const btn=document.createElement('button');btn.className='btn-del';btn.textContent='×';btn.onclick=()=>delRow(btn);
+  td9.appendChild(btn);tr.appendChild(td9);
+  tbody.appendChild(tr);setupNumFmt(tr);
+}
+
+// ── 열 너비 드래그 조정 ──
+function makeResizable(table){
+  table.style.tableLayout='fixed';
+  const ths=table.querySelectorAll('thead tr:first-child th');
+  ths.forEach(th=>{
+    if(th.querySelector('.col-resizer'))return;
+    const rz=document.createElement('div');rz.className='col-resizer';
+    th.style.position='relative';th.style.overflow='hidden';
+    let startX,startW;
+    rz.addEventListener('mousedown',e=>{
+      startX=e.clientX;startW=th.offsetWidth;rz.classList.add('dragging');
+      const move=ev=>{const w=Math.max(30,startW+ev.clientX-startX);th.style.width=w+'px';th.style.minWidth=w+'px';};
+      const up=()=>{rz.classList.remove('dragging');document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);};
+      document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);
+      e.preventDefault();e.stopPropagation();
+    });
+    th.appendChild(rz);
+  });
+}
+function addOtherRow(){
+  const tbody=document.getElementById('other-na-body');
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><input class="num-fmt" type="text" value="0"></td><td class="label-cell"><input type="text"></td><td><input type="text"></td><td><input class="num-fmt" type="text" value="0"></td><td><input class="num-fmt" type="text" value="0"></td><td><input class="num-fmt" type="text" value="0"></td><td><input class="num-fmt" type="text" value="0"></td><td><button class="btn-del" onclick="delRow(this)">×</button></td>`;
+  tbody.appendChild(tr); setupNumFmt(tr);
+}
+
+// ── 세입/세출 공통 숫자 입력 헬퍼 ──
+function makeNumInp(val){
+  const inp=document.createElement('input');
+  inp.className='num-fmt'; inp.type='text'; inp.value=fmtNum(val||0);
+  inp.style.cssText='border:none;background:transparent;width:100%;text-align:right;padding:2px 4px;font-size:12px;';
+  inp.addEventListener('focus',function(){this.value=String(this.value).replace(/,/g,'');});
+  inp.addEventListener('blur',function(){this.value=fmtNum(this.value);});
+  return inp;
+}
+// ── 세입현계표 행 관리 (장|관|항|목 전체 행) ──
+function addRevenueRow(){
+  const tbody=document.getElementById('revenue-body');
+  const tr=document.createElement('tr');
+  const mkT=(ph,bg)=>{const td=document.createElement('td');if(bg)td.style.background=bg;const i=document.createElement('input');i.type='text';i.style.cssText='border:none;background:transparent;width:100%;font-size:12px';i.placeholder=ph;td.appendChild(i);return td;};
+  tr.appendChild(mkT('장'));tr.appendChild(mkT('관','#f8faff'));tr.appendChild(mkT('항'));tr.appendChild(mkT('목'));
+  ['0','0','0','0'].forEach(v=>{const td=document.createElement('td');td.appendChild(makeNumInp(v));tr.appendChild(td);});
+  const tdDel=document.createElement('td');tdDel.className='no-print';
+  const btn=document.createElement('button');btn.className='btn-del';btn.textContent='×';btn.onclick=()=>{delRow(btn);recalcRevenue();};
+  tdDel.appendChild(btn);tr.appendChild(tdDel);
+  tbody.appendChild(tr);
+}
+function recalcRevenue(){
+  let budget=0,징수=0,수납=0,미수납=0;
+  document.querySelectorAll('#revenue-body tr').forEach(tr=>{
+    const ins=tr.querySelectorAll('input.num-fmt');
+    if(ins.length>=4){budget+=rawNum(ins[0].value);징수+=rawNum(ins[1].value);수납+=rawNum(ins[2].value);미수납+=rawNum(ins[3].value);}
+  });
+  ['rev-sum-budget','rev-sum-징수','rev-sum-수납','rev-sum-미수납'].forEach((id,i)=>{
+    const el=document.getElementById(id);if(el)el.value=fmtNum([budget,징수,수납,미수납][i]);
+  });
+}
+// ── 발전기금 수지현계표 ──
+function addDevfundRow(){
+  const tbody=document.getElementById('devfund-body');
+  const tr=document.createElement('tr');
+  const mkN=()=>{const i=document.createElement('input');i.type='text';i.className='num-fmt';i.value='0';i.style.cssText='border:none;background:transparent;width:100%;text-align:right;font-size:12px';i.addEventListener('focus',function(){this.value=this.value.replace(/,/g,'');});i.addEventListener('blur',function(){this.value=fmtNum(this.value);calcDevfundRow(this);});return i;};
+  const td0=document.createElement('td');const nm=document.createElement('input');nm.type='text';nm.style.cssText='border:none;background:transparent;width:100%;font-size:12px';nm.placeholder='항목명';td0.appendChild(nm);tr.appendChild(td0);
+  for(let i=0;i<5;i++){const td=document.createElement('td');const inp=mkN();if(i===2||i===4)inp.readOnly=true;td.appendChild(inp);tr.appendChild(td);}
+  const tdDel=document.createElement('td');tdDel.className='no-print';const btn=document.createElement('button');btn.className='btn-del';btn.textContent='×';btn.onclick=()=>{delRow(btn);recalcDevfund();};tdDel.appendChild(btn);tr.appendChild(tdDel);
+  tbody.appendChild(tr);
+}
+function calcDevfundRow(inp){
+  const tr=inp.closest('tr');if(!tr)return;
+  const ns=tr.querySelectorAll('input.num-fmt');if(ns.length<5)return;
+  const a=rawNum(ns[0].value),b=rawNum(ns[1].value),d=rawNum(ns[3].value);
+  ns[2].value=fmtNum(a+b);ns[4].value=fmtNum(a+b-d);
+  recalcDevfund();
+}
+function recalcDevfund(){
+  let sv=[0,0,0,0,0];
+  document.querySelectorAll('#devfund-body tr').forEach(tr=>{
+    const ns=tr.querySelectorAll('input.num-fmt');
+    if(ns.length>=5)ns.forEach((n,i)=>{if(i<5)sv[i]+=rawNum(n.value);});
+  });
+  ['df-sum-prev','df-sum-in','df-sum-계','df-sum-out','df-sum-잔'].forEach((id,i)=>{
+    const el=document.getElementById(id);if(el)el.value=fmtNum(sv[i]);
+  });
+}
+// ── 세입금 수지현계표 ──
+const REVFUND_DEFAULT=[
+  {관:'교수-학습활동수입',항:'기본적 교육수입',목:'입학금'},
+  {관:'교수-학습활동수입',항:'기본적 교육수입',목:'수업료'},
+  {관:'교수-학습활동수입',항:'기본적 교육수입',목:'지난년도수업료'},
+  {관:'기타수입',항:'기타수입',목:'그외수입'},
+];
+function buildRevfundTable(){
+  const tbody=document.getElementById('revfund-body');
+  tbody.innerHTML='';
+  REVFUND_DEFAULT.forEach(r=>addRevfundRow(r.관,r.항,r.목));
+}
+function addRevfundRow(관,항,목){
+  const tbody=document.getElementById('revfund-body');
+  const tr=document.createElement('tr');
+  const bdr='border:1px solid #ccc;';
+  const mkTd=(val,ph,bg)=>{
+    const td=document.createElement('td');td.style.cssText=bdr+(bg?'background:'+bg+';':'');
+    const i=document.createElement('input');i.type='text';i.style.cssText='border:none;background:transparent;width:100%;font-size:12px;text-align:center;';
+    i.value=val||'';i.placeholder=ph||'';td.appendChild(i);return td;
+  };
+  tr.appendChild(mkTd(관,'관','#f8faff'));
+  tr.appendChild(mkTd(항,'항'));
+  tr.appendChild(mkTd(목,'목'));
+  ['0','0','0','0'].forEach(v=>{
+    const td=document.createElement('td');td.style.cssText=bdr;td.appendChild(makeNumInp(v));tr.appendChild(td);
+  });
+  const tdDel=document.createElement('td');tdDel.className='no-print';
+  const btn=document.createElement('button');btn.className='btn-del';btn.textContent='×';
+  btn.onclick=()=>{delRow(btn);recalcRevfund();};tdDel.appendChild(btn);tr.appendChild(tdDel);
+  tbody.appendChild(tr);
+}
+function recalcRevfund(){
+  let s=[0,0,0,0];
+  document.querySelectorAll('#revfund-body tr').forEach(tr=>{
+    const ns=tr.querySelectorAll('input.num-fmt');if(ns.length>=4)ns.forEach((n,i)=>{if(i<4)s[i]+=rawNum(n.value);});
+  });
+  ['rf-sum-징수','rf-sum-수납','rf-sum-미수납','rf-sum-이월'].forEach((id,i)=>{
+    const el=document.getElementById(id);if(el)el.value=fmtNum(s[i]);
+  });
+}
+
+// ── 세출현계표 행 관리 (단위사업 1행) ──
+function addExpenseRow(){
+  const tbody=document.getElementById('expense-body');
+  const tr=document.createElement('tr');
+  const mkI=(ph)=>{const i=document.createElement('input');i.type='text';i.style.cssText='border:none;background:transparent;width:100%;font-size:12px';i.placeholder=ph;return i;};
+  const td1=document.createElement('td');td1.appendChild(mkI('정책사업명'));tr.appendChild(td1);
+  const td2=document.createElement('td');td2.style.background='#f0f4ff';td2.appendChild(mkI('단위사업명'));tr.appendChild(td2);
+  ['0','0','0'].forEach(v=>{const td=document.createElement('td');td.appendChild(makeNumInp(v));tr.appendChild(td);});
+  const tdN=document.createElement('td');tdN.appendChild(mkI(''));tr.appendChild(tdN);
+  const tdDel=document.createElement('td');tdDel.className='no-print';
+  const btn=document.createElement('button');btn.className='btn-del';btn.textContent='×';btn.onclick=()=>{delRow(btn);recalcExpense();};
+  tdDel.appendChild(btn);tr.appendChild(tdDel);
+  tbody.appendChild(tr);
+}
+function recalcExpense(){
+  let budget=0,spend=0,remain=0;
+  document.querySelectorAll('#expense-body tr').forEach(tr=>{
+    const ins=tr.querySelectorAll('input.num-fmt');
+    if(ins.length>=3){budget+=rawNum(ins[0].value);spend+=rawNum(ins[1].value);remain+=rawNum(ins[2].value);}
+  });
+  ['exp-sum-budget','exp-sum-지출','exp-sum-잔액'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el)el.value=fmtNum([budget,spend,remain][i]);
+  });
+}
+
+// ── 학생현황 ──
+function rebuildStudentTable(){
+  const type=document.getElementById('school-type-sel')?.value||'elementary';
+  const grades=type==='elementary'?['1학년','2학년','3학년','4학년','5학년','6학년']:['1학년','2학년','3학년'];
+  const head=document.getElementById('tbl-student-head'),tbody=document.getElementById('tbl-student-body');
+  head.innerHTML=`<tr><th style="min-width:65px">구분</th>${grades.map(g=>`<th colspan="2" contenteditable="true">${g}</th>`).join('')}<th colspan="2">계</th><th style="width:30px"></th></tr>
+  <tr><th></th>${grades.map(()=>'<th contenteditable="true">남</th><th contenteditable="true">여</th>').join('')}<th contenteditable="true">남</th><th contenteditable="true">여</th><th></th></tr>`;
+  const existingLabels=[];
+  tbody.querySelectorAll('tr').forEach(tr=>{const f=tr.querySelector('td');if(f)existingLabels.push(f.textContent.trim());});
+  tbody.innerHTML='';
+  (existingLabels.length>0?existingLabels:['학급수','학생수']).forEach(label=>addStudentRow(label,grades.length));
+}
+function addStudentRow(label,gradeCount){
+  const type=document.getElementById('school-type-sel')?.value||'elementary';
+  if(gradeCount===undefined)gradeCount=type==='elementary'?6:3;
+  const tbody=document.getElementById('tbl-student-body');
+  const dataCols=gradeCount*2+2;
+  const tr=document.createElement('tr');
+  const tdL=document.createElement('td');
+  tdL.contentEditable='true';tdL.style.cssText='background:#f8faff;font-weight:600;';tdL.textContent=label||'';
+  tr.appendChild(tdL);
+  for(let i=0;i<dataCols;i++){const td=document.createElement('td');td.contentEditable='true';td.textContent='0';tr.appendChild(td);}
+  const tdDel=document.createElement('td');const btn=document.createElement('button');
+  btn.className='btn-del';btn.textContent='×';btn.onclick=()=>delRow(btn);
+  tdDel.appendChild(btn);tr.appendChild(tdDel);tbody.appendChild(tr);
+}
+
+// ── contenteditable 테이블 ──
+function addEditableRow(tbodyId,colCount){
+  const tbody=document.getElementById(tbodyId);if(!tbody)return;
+  const tr=document.createElement('tr');
+  for(let i=0;i<colCount;i++){const td=document.createElement('td');td.contentEditable='true';td.textContent=i===0?'':0;tr.appendChild(td);}
+  const tdDel=document.createElement('td');const btn=document.createElement('button');
+  btn.className='btn-del';btn.textContent='×';btn.onclick=()=>delRow(btn);
+  tdDel.appendChild(btn);tr.appendChild(tdDel);tbody.appendChild(tr);
+}
+function addEditableCol(tblId,headId,label,insertBefore){
+  const tbl=document.getElementById(tblId),head=document.getElementById(headId);
+  if(!tbl||!head)return;
+  head.querySelectorAll('tr').forEach((tr,ri)=>{
+    const th=document.createElement('th');th.contentEditable='true';th.textContent=ri===0?label:'';
+    tr.insertBefore(th,tr.lastElementChild);
+  });
+  tbl.querySelectorAll('tbody tr').forEach(tr=>{
+    const td=document.createElement('td');td.contentEditable='true';td.textContent='0';
+    tr.insertBefore(td,tr.lastElementChild);
+  });
+}
+function delLastCol(tblId){
+  const tbl=document.getElementById(tblId);if(!tbl)return;
+  tbl.querySelectorAll('tr').forEach(tr=>{
+    const cells=tr.querySelectorAll('th[contenteditable],td[contenteditable]');
+    if(cells.length>1)cells[cells.length-1].remove();
+  });
+}
+
+// ── 파일 파싱 ──
+function findHeaderRow(rows,keywords){
+  for(let i=0;i<rows.length;i++){
+    const s=rows[i].map(c=>String(c==null?'':c).trim()).join('||');
+    if(keywords.some(kw=>s.includes(kw)))return i;
+  }return -1;
+}
+function colIdx(headerRow,...keywords){
+  // 1단계: 정확히 일치하는 열 우선 탐지
+  for(const kw of keywords){const i=headerRow.findIndex(c=>String(c==null?'':c).trim()===kw);if(i>=0)return i;}
+  // 2단계: 포함 매칭 (코드/명칭 혼용 파일 대응)
+  for(const kw of keywords){const i=headerRow.findIndex(c=>String(c==null?'':c).includes(kw));if(i>=0)return i;}
+  return -1;
+}
+function toNum(v){const s=String(v==null?'':v).replace(/,/g,'').trim();const n=parseFloat(s);return isNaN(n)?0:n;}
+
+// ── 세출 그룹핑 (단위사업 1행 집계) ──
+function populateExpense(rows){
+  const hIdx=findHeaderRow(rows,['정책','단위','예산','지출','잔액']);
+  const header=hIdx>=0?rows[hIdx]:rows[0];
+  const dataRows=rows.slice(hIdx>=0?hIdx+1:1).filter(r=>r.some(c=>String(c==null?'':c).trim()!==''));
+  const tbody=document.getElementById('expense-body');
+  tbody.innerHTML='';
+  if(!dataRows.length){addExpenseRow();return;}
+
+  // 사업명 컬럼 우선 탐지
+  const cPolicy=colIdx(header,'정책사업명','정책명','정책사업','정책');
+  const cUnit  =colIdx(header,'단위사업명','단위명','단위사업','단위');
+  const cBudget=colIdx(header,'예산현액','예산액','예산');
+  const cSpend =colIdx(header,'지출액','집행액','지출');
+  const cRemain=colIdx(header,'잔액');
+  const cNote  =colIdx(header,'비고');
+
+  // 단위사업별로 집계 (단위사업명이 같으면 금액 합산 → 1행)
+  const unitMap=new Map(); // key=단위사업명, value={policy,unit,b,s,rem,note}
+  dataRows.forEach(r=>{
+    const policy=String(cPolicy>=0?r[cPolicy]||'':'').trim();
+    const unit  =String(cUnit>=0?r[cUnit]||'':'').trim();
+    const key   =unit||policy||'기타';
+    const b=toNum(cBudget>=0?r[cBudget]:0);
+    const s=toNum(cSpend>=0?r[cSpend]:0);
+    const rem=toNum(cRemain>=0?r[cRemain]:b-s);
+    const note=String(cNote>=0?r[cNote]||'':'').trim();
+    if(!unitMap.has(key)){unitMap.set(key,{policy,unit:unit||key,b:0,s:0,rem:0,note});}
+    const g=unitMap.get(key);
+    g.b+=b;g.s+=s;g.rem+=rem;
+    if(note&&!g.note)g.note=note;
+  });
+
+  const mkI=(val,ph,bg)=>{const i=document.createElement('input');i.type='text';i.style.cssText='border:none;background:'+(bg||'transparent')+';width:100%;font-size:12px';i.value=val;i.placeholder=ph||'';return i;};
+  unitMap.forEach(({policy,unit,b,s,rem,note})=>{
+    const tr=document.createElement('tr');
+    const td1=document.createElement('td');td1.appendChild(mkI(policy,'정책사업명'));tr.appendChild(td1);
+    const td2=document.createElement('td');td2.style.background='#f0f4ff';td2.appendChild(mkI(unit,'단위사업명'));tr.appendChild(td2);
+    [b,s,rem].forEach(v=>{const td=document.createElement('td');td.appendChild(makeNumInp(v));tr.appendChild(td);});
+    const tdN=document.createElement('td');tdN.appendChild(mkI(note,''));tr.appendChild(tdN);
+    const tdDel=document.createElement('td');tdDel.className='no-print';
+    const btn=document.createElement('button');btn.className='btn-del';btn.textContent='×';btn.onclick=()=>{delRow(btn);recalcExpense();};
+    tdDel.appendChild(btn);tr.appendChild(tdDel);
+    tbody.appendChild(tr);
+  });
+  recalcExpense();
+}
+
+// ── 세입 (장|관|항|목 전체 행 표시, 집계 없음) ──
+function populateRevenue(rows){
+  const hIdx=findHeaderRow(rows,['예산','징수','수납','미수납','장','관','항','목']);
+  const header=hIdx>=0?rows[hIdx]:rows[0];
+  const dataRows=rows.slice(hIdx>=0?hIdx+1:1).filter(r=>r.some(c=>String(c==null?'':c).trim()!==''));
+  const tbody=document.getElementById('revenue-body');
+  tbody.innerHTML='';
+  if(!dataRows.length){addRevenueRow();return;}
+  const c장    =colIdx(header,'장명','장 명','장');
+  const c관    =colIdx(header,'관명','관 명','관');
+  const c항    =colIdx(header,'항명','항 명','항');
+  const c목    =colIdx(header,'목명','목 명','목','세목');
+  const cBudget=colIdx(header,'예산현액','예산액','예산');
+  const c징수  =colIdx(header,'징수');
+  const c수납  =colIdx(header,'수납');
+  const c미수납=colIdx(header,'미수납');
+
+  const mkT=(val,ph,bg)=>{const td=document.createElement('td');if(bg)td.style.background=bg;const i=document.createElement('input');i.type='text';i.style.cssText='border:none;background:transparent;width:100%;font-size:12px';i.value=String(val||'').trim();i.placeholder=ph||'';td.appendChild(i);return td;};
+  dataRows.forEach(r=>{
+    const tr=document.createElement('tr');
+    const 장=c장>=0?r[c장]:''; const 관=c관>=0?r[c관]:''; const 항=c항>=0?r[c항]:''; const 목=c목>=0?r[c목]:'';
+    tr.appendChild(mkT(장,'장'));
+    tr.appendChild(mkT(관,'관','#f8faff'));
+    tr.appendChild(mkT(항,'항'));
+    tr.appendChild(mkT(목,'목'));
+    const b=toNum(cBudget>=0?r[cBudget]:0),징=toNum(c징수>=0?r[c징수]:0),수=toNum(c수납>=0?r[c수납]:0),미=toNum(c미수납>=0?r[c미수납]:0);
+    [b,징,수,미].forEach(v=>{const td=document.createElement('td');td.appendChild(makeNumInp(v));tr.appendChild(td);});
+    const tdDel=document.createElement('td');tdDel.className='no-print';
+    const btn=document.createElement('button');btn.className='btn-del';btn.textContent='×';btn.onclick=()=>{delRow(btn);recalcRevenue();};
+    tdDel.appendChild(btn);tr.appendChild(tdDel);tbody.appendChild(tr);
+  });
+  recalcRevenue();
+}
+
+function populateDebt(rows){
+  const hIdx=findHeaderRow(rows,['정책','단위','세부','지출','원인행위','채주','상호','금액']);
+  const header=hIdx>=0?rows[hIdx]:rows[0];
+  const dataRows=rows.slice(hIdx>=0?hIdx+1:1).filter(r=>r.some(c=>String(c==null?'':c).trim()!==''));
+  const tbody=document.getElementById('debt-body');tbody.innerHTML='';
+  if(!dataRows.length){addDebtRow();return;}
+  const cP=colIdx(header,'정책사업명','정책명','정책사업','정책');
+  const cU=colIdx(header,'단위사업명','단위명','단위사업','단위');
+  const cD=colIdx(header,'세부사업명','세부명','세부사업','세부');
+  const cT=colIdx(header,'제목','지출내역','내역','품명');
+  const cDt=colIdx(header,'원인행위일','원인','행위일','일자');
+  const cAm=colIdx(header,'금액');
+  const cCo=colIdx(header,'상호','거래처');
+  const cPe=colIdx(header,'성명','대표');
+  const cNo=colIdx(header,'비고');
+  const g=(r,ci)=>ci>=0?String(r[ci]||'').trim():'';
+  dataRows.forEach(r=>{
+    addDebtRow(g(r,cP),g(r,cU),g(r,cD),g(r,cT),g(r,cDt),toNum(cAm>=0?r[cAm]:0),g(r,cCo),g(r,cPe),g(r,cNo));
+  });
+}
+
+function populateOtherNa(rows){
+  const hIdx=findHeaderRow(rows,['이월','수입','지출','종목','보증','보관','잔액','전년','세목']);
+  const header=hIdx>=0?rows[hIdx]:rows[0];
+  const dataRows=rows.slice(hIdx>=0?hIdx+1:1).filter(r=>r.some(c=>String(c==null?'':c).trim()!==''));
+  const tbody=document.getElementById('other-na-body');tbody.innerHTML='';
+  if(!dataRows.length){addOtherRow();return;}
+  // 열 감지 — 정확 일치 우선, 그 다음 포함 매칭
+  const c이월 =colIdx(header,'전년도이월액','전년도이월','이월액','이월');
+  const c대   =colIdx(header,'종명','종목(대)','종목대','대분류','종목명','종목');
+  const c소   =colIdx(header,'목명','종목(소)','종목소','세목명','소분류','세목');
+  const c수입 =colIdx(header,'수입액','수입금액','수납액','수입');
+  const c수입계=colIdx(header,'수입계');
+  const c지출 =colIdx(header,'지출액','지출금액','지출');
+  const c잔액 =colIdx(header,'잔액');
+  const mkN=(r,ci)=>{const td=document.createElement('td');td.appendChild(makeNumInp(toNum(ci>=0?r[ci]:0)));return td;};
+  const mkT=(r,ci,isBig)=>{
+    const td=document.createElement('td');if(isBig)td.className='label-cell';
+    const i=document.createElement('input');i.type='text';
+    i.style.cssText='border:none;background:transparent;width:100%;font-size:12px';
+    i.value=String(ci>=0?r[ci]||'':'').trim();td.appendChild(i);return td;
+  };
+  dataRows.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.appendChild(mkN(r,c이월));
+    tr.appendChild(mkT(r,c대,true));
+    tr.appendChild(mkT(r,c소,false));
+    tr.appendChild(mkN(r,c수입));
+    tr.appendChild(mkN(r,c수입계));
+    tr.appendChild(mkN(r,c지출));
+    tr.appendChild(mkN(r,c잔액));
+    const tdDel=document.createElement('td');const btn=document.createElement('button');btn.className='btn-del';btn.textContent='×';btn.onclick=()=>delRow(btn);tdDel.appendChild(btn);tr.appendChild(tdDel);tbody.appendChild(tr);
+  });
+}
+
+// ── 파일 핸들러 ──
+let _modalCtx=null;
+const FILE_FIELDS={
+  1:[{key:'col_policy',label:'정책사업코드',type:'text'},{key:'col_unit',label:'단위사업코드',type:'text'},{key:'col_detail',label:'세부사업코드',type:'text'},{key:'col_desc',label:'지출내역',type:'text'},{key:'col_date',label:'원인행위일',type:'text'},{key:'col_amount',label:'금액(원)',type:'number'},{key:'col_company',label:'채주(상호)',type:'text'},{key:'col_person',label:'채주(성명)',type:'text'},{key:'col_note',label:'비고',type:'text'}],
+  2:[{key:'c장',label:'장',type:'text'},{key:'c관',label:'관',type:'text'},{key:'c항',label:'항',type:'text'},{key:'c목',label:'목',type:'text'},{key:'cBudget',label:'예산액',type:'number'},{key:'c징수',label:'징수액',type:'number'},{key:'c수납',label:'수납액',type:'number'},{key:'c미수납',label:'미수납액',type:'number'}],
+  3:[{key:'cPolicy',label:'정책사업명',type:'text'},{key:'cUnit',label:'단위사업명',type:'text'},{key:'cDetail',label:'세부사업명',type:'text'},{key:'cBudget',label:'예산현액',type:'number'},{key:'cSpend',label:'지출액',type:'number'},{key:'cRemain',label:'잔액',type:'number'},{key:'cNote',label:'비고',type:'text'}],
+  4:[{key:'c이월',label:'전년도이월액',type:'number'},{key:'c종목대',label:'종목(대)',type:'text'},{key:'c종목소',label:'종목(소)',type:'text'},{key:'c수입',label:'수입액',type:'number'},{key:'c수입계',label:'수입계',type:'number'},{key:'c지출',label:'지출액',type:'number'},{key:'c잔액',label:'잔액',type:'number'}],
+};
+const AUTO_HINTS={
+  col_policy:['정책'],col_unit:['단위'],col_detail:['세부'],col_desc:['내역','품명'],col_date:['원인','행위일','일자'],col_amount:['금액'],col_company:['상호','거래처'],col_person:['성명','대표'],col_note:['비고'],
+  c장:['장명','장 명','장'],c관:['관명','관 명','관'],c항:['항명','항 명','항'],c목:['목명','목 명','세목명','목'],cBudget:['예산현액','예산액','예산'],c징수:['징수'],c수납:['수납'],c미수납:['미수납'],
+  cPolicy:['정책사업명','정책명','정책사업','정책'],cUnit:['단위사업명','단위명','단위사업','단위'],cDetail:['세부사업명','세부명','세부사업','세부'],cBudget:['예산현액','예산액','예산'],cSpend:['지출금액','지출액','집행금액','집행액','지출'],cRemain:['잔액'],cNote:['비고'],
+  c이월:['전년도이월','이월액','이월'],c종목대:['종목(대)','종목대','대분류','종목'],c종목소:['종목(소)','종목소','세목명','소분류','세목'],c수입:['수입액','수입금액','수납액','수납','수입'],c수입계:['수입계','합계'],c지출:['지출액','지출금액','지출'],c잔액:['잔액'],
+};
+function handleFile(evt,fileNum){
+  if(typeof XLSX==='undefined'){setFileStatus(fileNum,false,'❌ XLSX 라이브러리 미로드. 새로고침 해주세요.');return;}
+  const file=evt.target.files[0];if(!file)return;
+  document.getElementById('fn-'+fileNum).textContent=file.name;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+      if(!rows||rows.length===0){setFileStatus(fileNum,false,'❌ 파일에서 데이터를 읽지 못했습니다.');return;}
+      const hKeywords={1:['정책','단위','세부','지출','원인행위','채주','상호','금액'],2:['예산','징수','수납','미수납','장','관','항','목'],3:['예산','지출','잔액','정책사업','단위사업','세부사업'],4:['이월','수입','지출','종목','보증','보관','잔액']};
+      const hIdx=findHeaderRow(rows,hKeywords[fileNum]);
+      // 세입(2), 세출(3), 세입세출외(4)는 자동 적용 / 나머지는 모달
+      if(fileNum===2||fileNum===3||fileNum===4){
+        autoApplyMapping(fileNum,rows,hIdx>=0?hIdx:0);
+      } else {
+        openMappingModal(fileNum,rows,hIdx>=0?hIdx:0);
+      }
+    }catch(err){setFileStatus(fileNum,false,'❌ 파일 읽기 실패: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
+  evt.target.value='';
+}
+function openMappingModal(fileNum,rows,headerIdx){
+  const headerRow=rows[headerIdx]||[];
+  const dataRows=rows.slice(headerIdx+1);
+  const fields=FILE_FIELDS[fileNum];
+  const colOptions=headerRow.map((c,i)=>({i,label:String(c==null?'':c).trim()||`열${i+1}`}));
+  _modalCtx={fileNum,rows,headerIdx,dataRows,colOptions,fields};
+  const previewRows=[headerRow,...dataRows.slice(0,4)];
+  const pt=document.getElementById('previewTable');pt.innerHTML='';
+  previewRows.forEach((r,ri)=>{const tr=document.createElement('tr');r.slice(0,12).forEach(c=>{const el=document.createElement(ri===0?'th':'td');el.textContent=String(c==null?'':c).slice(0,25);tr.appendChild(el);});pt.appendChild(tr);});
+  const mapGrid=document.getElementById('mapGrid');mapGrid.innerHTML='';
+  fields.forEach(f=>{
+    const autoIdx=guessCol(headerRow,f.key);
+    const div=document.createElement('div');div.className='map-row';
+    const lbl=document.createElement('span');lbl.className='map-label';lbl.textContent=f.label;
+    const sel=document.createElement('select');sel.className='map-select';sel.id='map_'+f.key;
+    const none=document.createElement('option');none.value='-1';none.textContent='— (사용 안 함)';sel.appendChild(none);
+    colOptions.forEach(opt=>{const o=document.createElement('option');o.value=opt.i;o.textContent=`열${opt.i+1}: ${opt.label}`;if(opt.i===autoIdx)o.selected=true;sel.appendChild(o);});
+    if(autoIdx<0)sel.value='-1';
+    div.appendChild(lbl);div.appendChild(sel);mapGrid.appendChild(div);
+  });
+  const fNames={1:'파일 1 — 지출결의대상목록',2:'파일 2 — 세입현황',3:'파일 3 — 세출현황',4:'파일 4 — 세입세출외현금'};
+  document.getElementById('modalTitle').textContent='열 매핑 확인: '+fNames[fileNum];
+  document.getElementById('modalSub').innerHTML=`헤더 행(${headerIdx+1}행)과 데이터 행(${dataRows.length}행) 감지. 아래 매핑을 확인 후 [삽입]을 클릭하세요.`;
+  document.getElementById('mapModal').classList.add('open');
+}
+function guessCol(headerRow,key){const hints=AUTO_HINTS[key]||[];return colIdx(headerRow,...hints);}
+function autoApplyMapping(fileNum,rows,headerIdx){
+  const headerRow=rows[headerIdx]||[];
+  const dataRows=rows.slice(headerIdx+1).filter(r=>r.some(c=>String(c==null?'':c).trim()!==''));
+  const fields=FILE_FIELDS[fileNum];
+  const colMap=fields.map(f=>guessCol(headerRow,f.key));
+  const mappedRows=dataRows.map(r=>colMap.map(ci=>ci>=0?(r[ci]||''):''));
+  const fakeHeader=fields.map(f=>f.label);
+  if(fileNum===2)populateRevenue([fakeHeader,...mappedRows]);
+  else if(fileNum===3)populateExpense([fakeHeader,...mappedRows]);
+  else if(fileNum===4)populateOtherNa(rows); // raw rows로 직접 전달 — 내부에서 colIdx 감지
+  const count=dataRows.length;
+  setFileStatus(fileNum,true,`✓ ${count}행 자동 삽입 완료`);
+}
+function closeModal(){document.getElementById('mapModal').classList.remove('open');_modalCtx=null;}
+function applyMapping(){
+  if(!_modalCtx)return;
+  const{fileNum,dataRows,fields}=_modalCtx;
+  const colMap=fields.map(f=>parseInt(document.getElementById('map_'+f.key).value));
+  // 매핑을 dataRows에 적용해 rows 재구성 후 기존 populate 함수 호출
+  const mappedRows=dataRows.map(r=>colMap.map(ci=>ci>=0?(r[ci]||''):''));
+  const fakeHeader=fields.map(f=>f.label);
+  if(fileNum===1)populateDebt([fakeHeader,...mappedRows].map((r,ri)=>ri===0?r:r));
+  else if(fileNum===2)populateRevenue([fakeHeader,...mappedRows]);
+  else if(fileNum===3)populateExpense([fakeHeader,...mappedRows]);
+  else if(fileNum===4)populateOtherNa([fakeHeader,...mappedRows]); // fakeHeader도 colIdx로 감지됨
+  const count=dataRows.filter(r=>r.some(c=>String(c==null?'':c).trim()!=='')).length;
+  setFileStatus(fileNum,true,`✓ ${count}행 삽입 완료`);
+  closeModal();
+}
+function setFileStatus(n,ok,msg){
+  const uc=document.getElementById('uc-'+n),badge=document.getElementById('badge-'+n),status=document.getElementById('us-'+n);
+  uc.className='upload-card'+(ok?' done':' fail');
+  badge.className='upload-badge'+(ok?' done':' fail');
+  badge.textContent=ok?'✓ 파일 '+n:'✗ 파일 '+n;
+  status.className='upload-status '+(ok?'ok':'err');
+  status.textContent=msg;
+}
+function resetFile(n){
+  document.getElementById('fn-'+n).textContent='선택된 파일 없음';
+  document.getElementById('uc-'+n).className='upload-card';
+  document.getElementById('badge-'+n).className='upload-badge';
+  document.getElementById('badge-'+n).textContent='파일 '+n;
+  document.getElementById('us-'+n).textContent='';
+  document.getElementById('us-'+n).className='upload-status';
+  if(n===1){const b=document.getElementById('debt-body');b.innerHTML='';addDebtRow();makeResizable(document.getElementById('tbl-debt'));}
+  else if(n===2){const b=document.getElementById('revenue-body');b.innerHTML='';}
+  else if(n===3){const b=document.getElementById('expense-body');b.innerHTML='';}
+  else if(n===4){const b=document.getElementById('other-na-body');b.innerHTML='';addOtherRow();}
+}
+
+// ── 저장 ──
+function saveData(){
+  const data={};
+  document.querySelectorAll('input[id],textarea[id]').forEach(el=>{data[el.id]=el.type==='checkbox'?el.checked:el.value;});
+  try{localStorage.setItem('handover_v4',JSON.stringify(data));const msg=document.getElementById('savedMsg');msg.classList.add('show');setTimeout(()=>msg.classList.remove('show'),2000);}
+  catch(e){alert('저장 실패: '+e.message);}
+}
+function loadData(){
+  try{const raw=localStorage.getItem('handover_v4');if(!raw)return;const data=JSON.parse(raw);Object.entries(data).forEach(([id,val])=>{const el=document.getElementById(id);if(!el)return;if(el.type==='checkbox')el.checked=val;else el.value=val;});}catch(e){}
+}
+
+// ── Init ──
+window.addEventListener('load',()=>{
+  if(typeof XLSX==='undefined')document.getElementById('xlsxWarning').style.display='block';
+  rebuildStudentTable();
+  buildRevfundTable();
+  addDebtRow(); // 채무확정조서 초기 1행
+  loadData();
+  syncAll();
+  setupNumFmt();
+  // 모든 표 열 너비 드래그 조정 활성화
+  document.querySelectorAll('table').forEach(t=>makeResizable(t));
+});
+setInterval(saveData,30000);
+</script>
+</body>
+</html>
